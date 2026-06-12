@@ -202,6 +202,23 @@ function handleMouseDown(event) {
 	event.preventDefault();
 	initAudio();
 	
+	// Raycaster for checking if we clicked the 3D Gear Settings Icon
+	const tx = -1 + (event.clientX / window.innerWidth) * 2;
+	const ty = 1 - (event.clientY / window.innerHeight) * 2;
+	const raycaster = new THREE.Raycaster();
+	raycaster.setFromCamera({x: tx, y: ty}, camera);
+	
+	if (HUD.gearMesh) {
+		const intersects = raycaster.intersectObject(HUD.gearMesh, true);
+		if (intersects.length > 0) {
+			const settingsModal = document.getElementById('settings-modal');
+			settingsModal.classList.remove('hidden');
+			gameState = 'paused';
+			document.body.classList.remove('playing');
+			return; // Don't shoot
+		}
+	}
+	
 	if (event.button === 0) { // Left click
 		if (!isOverheated) {
 			isShootingMG = true;
@@ -400,7 +417,6 @@ function init() {
 	const welcomeScreen = document.getElementById('welcome-screen');
 	
 	// Controles de Ajustes
-	const settingsBtn = document.getElementById('settings-btn');
 	const settingsModal = document.getElementById('settings-modal');
 	const closeSettingsBtn = document.getElementById('close-settings-btn');
 	const muteMusicChk = document.getElementById('mute-music-chk');
@@ -412,14 +428,6 @@ function init() {
 		gameState = 'playing';
 		document.body.classList.add('playing');
 		playEpicSong(); // Esto iniciará el loop procedural
-	});
-	
-	settingsBtn.addEventListener('click', () => {
-		settingsModal.classList.remove('hidden');
-		if (gameState === 'playing') {
-			gameState = 'paused'; // Pausar si estaba jugando
-			document.body.classList.remove('playing');
-		}
 	});
 	
 	closeSettingsBtn.addEventListener('click', () => {

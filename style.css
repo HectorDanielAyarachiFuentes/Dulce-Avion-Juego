@@ -79,20 +79,6 @@ body.playing {
 }
 
 /* SETTINGS BUTTON AND MODAL */
-#settings-btn {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-	font-size: 36px;
-	cursor: pointer;
-	z-index: 101;
-	transition: transform 0.3s;
-	text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
-
-#settings-btn:hover {
-	transform: rotate(90deg) scale(1.1);
-}
 
 #settings-modal {
 	position: absolute;
