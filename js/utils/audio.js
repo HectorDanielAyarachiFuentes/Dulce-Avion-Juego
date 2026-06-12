@@ -2,16 +2,51 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 let noiseBuffer;
 
-export function initAudio() {
-	if (!audioCtx) {
-		audioCtx = new AudioContext();
+// Estado Global de Audio
+export let isMusicMuted = false;
+export let isSfxMuted = false;
+export let currentSongId = 0;
+let currentSchedulerTimer = null;
+let masterMusicGain;
+let masterSfxGain;
+
+export function setMusicMuted(muted) {
+	isMusicMuted = muted;
+	if (masterMusicGain) {
+		masterMusicGain.gain.setValueAtTime(muted ? 0 : 0.6, audioCtx.currentTime);
 	}
 }
 
-// Generador de Ruido Blanco para efectos más realistas (explosiones, viento, disparos)
+export function setSfxMuted(muted) {
+	isSfxMuted = muted;
+	if (masterSfxGain) {
+		masterSfxGain.gain.setValueAtTime(muted ? 0 : 1.0, audioCtx.currentTime);
+	}
+}
+
+export function setSongId(id) {
+	currentSongId = id;
+	// Al cambiar de canción, reiniciamos el secuenciador
+	playEpicSong();
+}
+
+export function initAudio() {
+	if (!audioCtx) {
+		audioCtx = new AudioContext();
+		
+		masterMusicGain = audioCtx.createGain();
+		masterMusicGain.gain.value = isMusicMuted ? 0 : 0.6;
+		masterMusicGain.connect(audioCtx.destination);
+		
+		masterSfxGain = audioCtx.createGain();
+		masterSfxGain.gain.value = isSfxMuted ? 0 : 1.0;
+		masterSfxGain.connect(audioCtx.destination);
+	}
+}
+
 function getNoiseBuffer() {
 	if (noiseBuffer) return noiseBuffer;
-	const bufferSize = audioCtx.sampleRate * 2; // 2 segundos de ruido
+	const bufferSize = audioCtx.sampleRate * 2;
 	noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
 	const output = noiseBuffer.getChannelData(0);
 	for (let i = 0; i < bufferSize; i++) {
@@ -20,12 +55,10 @@ function getNoiseBuffer() {
 	return noiseBuffer;
 }
 
-// Efecto de Misil: Sonido de "Whoosh" + Motor de cohete grave
 export function playShootSound() {
-	if (!audioCtx) return;
+	if (!audioCtx || isSfxMuted) return;
 	const now = audioCtx.currentTime;
 
-	// 1. Retumbo grave (Motor)
 	const osc = audioCtx.createOscillator();
 	osc.type = 'sawtooth';
 	osc.frequency.setValueAtTime(150, now);
@@ -36,24 +69,21 @@ export function playShootSound() {
 	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
 	
 	osc.connect(oscGain);
-	oscGain.connect(audioCtx.destination);
+	oscGain.connect(masterSfxGain);
 	
-	// 2. Ruido siseante (Viento / Quemado)
 	const noise = audioCtx.createBufferSource();
 	noise.buffer = getNoiseBuffer();
-	
 	const noiseFilter = audioCtx.createBiquadFilter();
 	noiseFilter.type = 'lowpass';
 	noiseFilter.frequency.setValueAtTime(2000, now);
 	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 0.5);
-	
 	const noiseGain = audioCtx.createGain();
 	noiseGain.gain.setValueAtTime(0.8, now);
 	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
 	
 	noise.connect(noiseFilter);
 	noiseFilter.connect(noiseGain);
-	noiseGain.connect(audioCtx.destination);
+	noiseGain.connect(masterSfxGain);
 	
 	osc.start(now);
 	osc.stop(now + 0.6);
@@ -61,40 +91,32 @@ export function playShootSound() {
 	noise.stop(now + 0.6);
 }
 
-// Efecto de Ametralladora: Disparo metálico seco con chispa de pólvora
 export function playMachineGunSound() {
-	if (!audioCtx) return;
+	if (!audioCtx || isSfxMuted) return;
 	const now = audioCtx.currentTime;
 	
-	// 1. Estallido de pólvora (Ruido filtrado)
 	const noise = audioCtx.createBufferSource();
 	noise.buffer = getNoiseBuffer();
-	
 	const noiseFilter = audioCtx.createBiquadFilter();
 	noiseFilter.type = 'bandpass';
 	noiseFilter.frequency.setValueAtTime(1200, now);
-	noiseFilter.Q.value = 1; // Filtro no muy agudo
-	
+	noiseFilter.Q.value = 1;
 	const noiseGain = audioCtx.createGain();
 	noiseGain.gain.setValueAtTime(0.5, now);
-	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08); // Decae muy rápido
-	
+	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
 	noise.connect(noiseFilter);
 	noiseFilter.connect(noiseGain);
-	noiseGain.connect(audioCtx.destination);
+	noiseGain.connect(masterSfxGain);
 	
-	// 2. Click metálico percusivo
 	const osc = audioCtx.createOscillator();
 	osc.type = 'square';
 	osc.frequency.setValueAtTime(400, now);
 	osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
-	
 	const oscGain = audioCtx.createGain();
 	oscGain.gain.setValueAtTime(0.4, now);
 	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-	
 	osc.connect(oscGain);
-	oscGain.connect(audioCtx.destination);
+	oscGain.connect(masterSfxGain);
 	
 	noise.start(now);
 	noise.stop(now + 0.1);
@@ -102,142 +124,261 @@ export function playMachineGunSound() {
 	osc.stop(now + 0.05);
 }
 
-// BSO: Secuenciador Procedural de Música Épica (Chiptune Heroico)
+// BSO: Secuenciador Procedural Avanzado (7 Canciones)
 export function playEpicSong() {
 	initAudio();
-	const bpm = 135; // Tempo rápido y enérgico
-	const beatDuration = 60 / bpm; // Duración de una negra
 	
-	// Acordes de marcha épica: La menor, Fa Mayor, Do Mayor, Sol Mayor
-	// Frecuencias base (Hz): A2, F2, C3, G2
-	const chords = [
-		[110.00, 220.00, 164.81], // Am
-		[87.31, 174.61, 130.81],  // F
-		[130.81, 261.63, 196.00], // C
-		[98.00, 196.00, 146.83]   // G
-	];
+	// Limpiar scheduler previo si se cambió de canción
+	if (currentSchedulerTimer) {
+		clearTimeout(currentSchedulerTimer);
+	}
 	
+	const SONGS = {
+		0: { // 1. Épica Original
+			bpm: 135,
+			chords: [[110.00, 220.00, 164.81], [87.31, 174.61, 130.81], [130.81, 261.63, 196.00], [98.00, 196.00, 146.83]],
+			style: 'epic'
+		},
+		1: { // 2. Lamento de la Puna (Andina Triste 1)
+			bpm: 65,
+			chords: [[110.00, 130.81, 164.81], [98.00, 146.83, 196.00], [110.00, 130.81, 164.81], [82.41, 110.00, 164.81]], // Escala pentatónica menor (Am)
+			style: 'sad_andina_lamento'
+		},
+		2: { // 3. Vuelo Solitario (Andina Triste 2)
+			bpm: 70,
+			chords: [[146.83, 174.61, 220.00], [130.81, 164.81, 196.00], [110.00, 130.81, 164.81], [146.83, 174.61, 220.00]], // Dm, C, Am, Dm
+			style: 'sad_andina'
+		},
+		3: { // 4. Carnavalito en las Nubes (Alegre)
+			bpm: 110,
+			chords: [[130.81, 164.81, 196.00], [130.81, 196.00, 261.63], [98.00, 146.83, 196.00], [130.81, 164.81, 196.00]], // C, C, G, C
+			style: 'happy_andina'
+		},
+		4: { // 5. Caporal del Cielo (Alegre)
+			bpm: 115,
+			chords: [[110.00, 130.81, 164.81], [87.31, 130.81, 174.61], [98.00, 146.83, 196.00], [110.00, 164.81, 220.00]], // Am, F, G, Am
+			style: 'happy_caporal'
+		},
+		5: { // 6. Nazca Espacial (Misterio/Alien)
+			bpm: 85,
+			chords: [[110.00, 116.54, 164.81], [110.00, 138.59, 164.81], [110.00, 116.54, 164.81], [98.00, 103.83, 146.83]], // Modos frígios alienígenas
+			style: 'alien'
+		},
+		6: { // 7. Contacto en los Andes (Misterio/Alien)
+			bpm: 90,
+			chords: [[146.83, 174.61, 220.00], [138.59, 164.81, 207.65], [146.83, 174.61, 220.00], [155.56, 185.00, 233.08]], // Cromatismos oscuros
+			style: 'alien'
+		}
+	};
+	
+	const currentSong = SONGS[currentSongId];
+	const beatDuration = 60 / currentSong.bpm;
+	
+	// Utilidad para reproducir una nota con parámetros
+	function playNote(freq, type, startTime, duration, vol, isAlien=false) {
+		const osc = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+		osc.type = type;
+		osc.frequency.value = freq;
+		
+		if (isAlien) {
+			// LFO tipo Theremin
+			const lfo = audioCtx.createOscillator();
+			lfo.frequency.value = 6;
+			const lfoGain = audioCtx.createGain();
+			lfoGain.gain.value = freq * 0.05;
+			lfo.connect(lfoGain);
+			lfoGain.connect(osc.frequency);
+			lfo.start(startTime);
+			lfo.stop(startTime + duration);
+		}
+		
+		// Zampoña simulada (onda seno lenta) vs Charango (onda sierra/triangulo rápida)
+		if (type === 'sine') {
+			gain.gain.setValueAtTime(0, startTime);
+			gain.gain.linearRampToValueAtTime(vol, startTime + duration * 0.3); // Ataque lento (aire)
+			gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration - 0.01);
+		} else {
+			gain.gain.setValueAtTime(0, startTime);
+			gain.gain.linearRampToValueAtTime(vol, startTime + 0.02); // Ataque rápido (cuerda/plástico)
+			gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration - 0.01);
+		}
+		
+		osc.connect(gain);
+		gain.connect(masterMusicGain);
+		osc.start(startTime);
+		osc.stop(startTime + duration);
+	}
+	
+	function playDrum(type, startTime, duration) {
+		if (type === 'kick') {
+			const osc = audioCtx.createOscillator();
+			const gain = audioCtx.createGain();
+			osc.frequency.setValueAtTime(150, startTime);
+			osc.frequency.exponentialRampToValueAtTime(30, startTime + 0.1);
+			gain.gain.setValueAtTime(0.8, startTime);
+			gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+			osc.connect(gain);
+			gain.connect(masterMusicGain);
+			osc.start(startTime);
+			osc.stop(startTime + 0.1);
+		} else if (type === 'snare' || type === 'hat') {
+			const noise = audioCtx.createBufferSource();
+			noise.buffer = getNoiseBuffer();
+			const filter = audioCtx.createBiquadFilter();
+			filter.type = type === 'hat' ? 'highpass' : 'bandpass';
+			filter.frequency.value = type === 'hat' ? 5000 : 1500;
+			const gain = audioCtx.createGain();
+			gain.gain.setValueAtTime(type === 'hat' ? 0.1 : 0.3, startTime);
+			gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.05);
+			noise.connect(filter);
+			filter.connect(gain);
+			gain.connect(masterMusicGain);
+			noise.start(startTime);
+			noise.stop(startTime + 0.05);
+		}
+	}
+
 	function scheduleMeasure(startTime, measureIndex) {
 		const chordIndex = measureIndex % 4;
-		const chord = chords[chordIndex];
+		const chord = currentSong.chords[chordIndex];
 		const rootFreq = chord[0];
 		
 		const isIntro = measureIndex < 8;
 		const isDev = measureIndex >= 8 && measureIndex < 16;
 		const isEpic = measureIndex >= 16;
 		
-		// 1. Línea de Bajo Conductor (Semicorcheas oscilantes)
-		for (let i = 0; i < 16; i++) {
-			const time = startTime + i * (beatDuration / 4);
-			const osc = audioCtx.createOscillator();
-			const gain = audioCtx.createGain();
-			const filter = audioCtx.createBiquadFilter();
-			
-			osc.type = 'sawtooth';
-			osc.frequency.value = rootFreq;
-			
-			filter.type = 'lowpass';
-			filter.frequency.setValueAtTime(isEpic ? 300 : 150, time); // Más brillante en la parte épica
-			filter.frequency.exponentialRampToValueAtTime(isEpic ? 1200 : 800, time + 0.03);
-			filter.frequency.exponentialRampToValueAtTime(isEpic ? 300 : 150, time + (beatDuration/4) - 0.01);
-			
-			gain.gain.setValueAtTime(0, time);
-			gain.gain.linearRampToValueAtTime(isEpic ? 0.4 : 0.25, time + 0.02); // Más volumen en epic
-			gain.gain.exponentialRampToValueAtTime(0.01, time + (beatDuration/4) - 0.01);
-			
-			osc.connect(filter);
-			filter.connect(gain);
-			gain.connect(audioCtx.destination);
-			
-			osc.start(time);
-			osc.stop(time + (beatDuration/4));
-		}
+		// --- LÓGICA DE CANCIONES ---
 		
-		// 2. Melodía Heroica / Arpegios
-		const arpeggioNotes = isIntro ? 8 : 16; // Corcheas en intro, semicorcheas después
-		const arpDuration = beatDuration * 4 / arpeggioNotes;
-		for (let i = 0; i < arpeggioNotes; i++) {
-			const time = startTime + i * arpDuration;
-			const noteFreq = chord[i % 3] * 2; // Una octava más alta
-			
-			const osc = audioCtx.createOscillator();
-			const gain = audioCtx.createGain();
-			
-			osc.type = 'square';
-			osc.frequency.value = noteFreq;
-			
-			gain.gain.setValueAtTime(0, time);
-			gain.gain.linearRampToValueAtTime(0.1, time + 0.05);
-			gain.gain.exponentialRampToValueAtTime(0.01, time + arpDuration - 0.01);
-			
-			osc.connect(gain);
-			gain.connect(audioCtx.destination);
-			
-			osc.start(time);
-			osc.stop(time + arpDuration);
-		}
-		
-		// 3. Batería (Desarrollo y Clímax)
-		if (isDev || isEpic) {
-			// Bombo (Kick) pesado en cada negra
-			for (let i = 0; i < 4; i++) {
-				const time = startTime + i * beatDuration;
-				const osc = audioCtx.createOscillator();
-				const gain = audioCtx.createGain();
-				osc.frequency.setValueAtTime(150, time);
-				osc.frequency.exponentialRampToValueAtTime(30, time + 0.1);
-				gain.gain.setValueAtTime(0.8, time);
-				gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-				osc.connect(gain);
-				gain.connect(audioCtx.destination);
-				osc.start(time);
-				osc.stop(time + 0.1);
-			}
-		}
-		
-		// 4. Éxtasis Épico: Sub-Bajo y Hi-Hats furiosos
-		if (isEpic) {
-			// Sub-Bajo profundo continuo
-			const subOsc = audioCtx.createOscillator();
-			subOsc.type = 'square';
-			subOsc.frequency.value = rootFreq / 2; // Octava destructiva
-			const subGain = audioCtx.createGain();
-			const subFilter = audioCtx.createBiquadFilter();
-			subFilter.type = 'lowpass';
-			subFilter.frequency.value = 150; // Quitar agudos para que retumbe
-			
-			subGain.gain.setValueAtTime(0.3, startTime);
-			subGain.gain.linearRampToValueAtTime(0.3, startTime + beatDuration * 3.8);
-			subGain.gain.linearRampToValueAtTime(0, startTime + beatDuration * 4);
-			
-			subOsc.connect(subFilter);
-			subFilter.connect(subGain);
-			subGain.connect(audioCtx.destination);
-			
-			subOsc.start(startTime);
-			subOsc.stop(startTime + beatDuration * 4);
-			
-			// Hi-Hats de ruido blanco en semicorcheas
+		if (currentSong.style === 'epic') {
+			// EPICA (Original)
 			for (let i = 0; i < 16; i++) {
 				const time = startTime + i * (beatDuration / 4);
-				// Acentuar el contratiempo (el 'and' de cada pulso)
-				const isAccent = (i % 2 !== 0);
+				playNote(rootFreq, 'sawtooth', time, beatDuration/4, isEpic ? 0.4 : 0.25);
+			}
+			const arps = isIntro ? 8 : 16;
+			for (let i = 0; i < arps; i++) {
+				const time = startTime + i * (beatDuration * 4 / arps);
+				playNote(chord[i % 3] * 2, 'square', time, beatDuration * 4 / arps, 0.1);
+			}
+			if (isDev || isEpic) {
+				for (let i=0; i<4; i++) playDrum('kick', startTime + i * beatDuration);
+			}
+			if (isEpic) {
+				for (let i=0; i<16; i++) playDrum('hat', startTime + i * (beatDuration/4));
+			}
+			
+		} else if (currentSong.style === 'sad_andina_lamento') {
+			// LAMENTO DE LA PUNA (Intro Triste -> Desarrollo Melancólico -> Final "Triste pero Alegre")
+			const isEnd = measureIndex >= 16;
+			
+			// En el final forzamos acordes mayores (C Mayor y Fa Mayor) para darle ese toque "esperanzador y alegre" dentro de la tristeza
+			let playChord = chord;
+			let playRoot = rootFreq;
+			if (isEnd) {
+				const happyEndingChords = [[130.81, 164.81, 196.00], [98.00, 146.83, 196.00], [87.31, 130.81, 174.61], [130.81, 164.81, 196.00]]; // C, G, F, C
+				playChord = happyEndingChords[chordIndex];
+				playRoot = playChord[0];
+			}
+			
+			// Bajo andino base
+			playNote(playRoot / 2, 'triangle', startTime, beatDuration * 2, 0.4);
+			playNote(playRoot / 2, 'triangle', startTime + beatDuration * 2, beatDuration * 2, 0.4);
+			
+			if (isIntro) {
+				// 1. INICIO: Nota solitaria y triste al principio (Zampoña)
+				playNote(playRoot * 2, 'sine', startTime, beatDuration * 4, 0.35);
+			} else if (isDev) {
+				// 2. DESARROLLO: Melancólico, arpegios lentos de Charango
+				for (let i = 0; i < 4; i++) {
+					const time = startTime + i * beatDuration;
+					playNote(playChord[i % 3] * 2, 'triangle', time, beatDuration, 0.25);
+				}
+				// Zampoña llorando de fondo
+				playNote(playChord[1] * 2, 'sine', startTime, beatDuration * 4, 0.2);
+			} else if (isEnd) {
+				// 3. FINAL: Triste pero Alegre. Entra percusión andina y la melodía se acelera y vuelve mayor
+				for (let i = 0; i < 8; i++) {
+					const time = startTime + i * (beatDuration / 2);
+					playNote(playChord[i % 3] * 2, 'triangle', time, beatDuration/2, 0.2);
+				}
+				// Bombo y Chasquido (Caja)
+				playDrum('kick', startTime);
+				playDrum('snare', startTime + beatDuration);
+				playDrum('kick', startTime + beatDuration * 2);
+				playDrum('snare', startTime + beatDuration * 3);
 				
-				const noise = audioCtx.createBufferSource();
-				noise.buffer = getNoiseBuffer();
-				const nFilter = audioCtx.createBiquadFilter();
-				nFilter.type = 'highpass';
-				nFilter.frequency.value = 5000;
-				const nGain = audioCtx.createGain();
-				nGain.gain.setValueAtTime(isAccent ? 0.15 : 0.05, time);
-				nGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
-				
-				noise.connect(nFilter);
-				nFilter.connect(nGain);
-				nGain.connect(audioCtx.destination);
-				
-				noise.start(time);
-				noise.stop(time + 0.05);
+				// Zampoña luminosa
+				playNote(playChord[2] * 2, 'sine', startTime, beatDuration * 4, 0.3);
+			}
+			
+		} else if (currentSong.style === 'sad_andina') {
+			// VUELO SOLITARIO (Triste 2 - Antiguo algoritmo)
+			playNote(rootFreq / 2, 'triangle', startTime, beatDuration * 2, 0.4);
+			playNote(rootFreq / 2, 'triangle', startTime + beatDuration * 2, beatDuration * 2, 0.4);
+			
+			const notes = isIntro ? 2 : 4;
+			for (let i = 0; i < notes; i++) {
+				const time = startTime + i * (beatDuration * 4 / notes);
+				const note = (i === notes-1) ? chord[2] : chord[i % 3]; 
+				playNote(note * 2, 'sine', time, beatDuration * 4 / notes, 0.3);
+			}
+			if (isEpic) {
+				for (let i=0; i<4; i++) playDrum('hat', startTime + i * beatDuration);
+			}
+			
+		} else if (currentSong.style === 'happy_andina') {
+			// ALEGRÍA ANDINA (Carnavalito)
+			// Bajo sincopado
+			playNote(rootFreq, 'square', startTime, beatDuration/2, 0.3);
+			playNote(rootFreq, 'square', startTime + beatDuration, beatDuration/2, 0.3);
+			playNote(chord[1], 'square', startTime + beatDuration*1.5, beatDuration/2, 0.3);
+			
+			// Bombo Legüero
+			for (let i = 0; i < 4; i++) {
+				playDrum('kick', startTime + i * beatDuration);
+				if (i % 2 !== 0) playDrum('snare', startTime + i * beatDuration + beatDuration/2); // Chasquido
+			}
+			
+			// Melodía rápida (Charango)
+			for (let i = 0; i < 8; i++) {
+				const time = startTime + i * (beatDuration / 2);
+				playNote(chord[i % 3] * 4, 'triangle', time, beatDuration/2, 0.15); // Agudo y rápido
+			}
+			
+		} else if (currentSong.style === 'happy_caporal') {
+			// ALEGRÍA ANDINA 2 (Caporal)
+			// El caporal tiene un pulso tump-tump muy marcado
+			playDrum('kick', startTime);
+			playDrum('kick', startTime + beatDuration * 0.75); // Síncopa
+			playDrum('kick', startTime + beatDuration * 2);
+			playDrum('kick', startTime + beatDuration * 2.75);
+			
+			playNote(rootFreq, 'sawtooth', startTime, beatDuration * 0.5, 0.3);
+			playNote(rootFreq, 'sawtooth', startTime + beatDuration * 2, beatDuration * 0.5, 0.3);
+			
+			for (let i = 0; i < 8; i++) {
+				const time = startTime + i * (beatDuration / 2);
+				playNote(chord[i % 2] * 2, 'square', time, beatDuration/2, 0.15);
+			}
+			
+		} else if (currentSong.style === 'alien') {
+			// MISTERIO ALIEN-ANDINO
+			// Zampoñas pero con LFO espeluznante
+			playNote(rootFreq * 2, 'sine', startTime, beatDuration * 4, 0.2, true); // True = LFO activado
+			
+			// Bajo perturbador
+			if (isDev || isEpic) {
+				playNote(rootFreq / 2, 'sawtooth', startTime, beatDuration * 0.5, 0.3);
+				playNote(chord[1] / 2, 'sawtooth', startTime + beatDuration * 1.5, beatDuration * 0.5, 0.3);
+			}
+			
+			// Percusión tribal glitch
+			for (let i = 0; i < 16; i++) {
+				const time = startTime + i * (beatDuration / 4);
+				if (Math.random() > 0.7) {
+					playDrum('hat', time);
+				}
 			}
 		}
 	}
@@ -245,19 +386,28 @@ export function playEpicSong() {
 	let currentMeasure = 0;
 	let nextScheduleTime = audioCtx.currentTime + 0.1;
 	
+	// Identificador único para el loop actual
+	const localSongId = currentSongId; 
+	
 	function scheduler() {
-		// Programar el siguiente compás si se acerca el tiempo
+		// Si el usuario cambió de canción, abandonamos este loop (el nuevo ya habrá iniciado)
+		if (localSongId !== currentSongId) return;
+		
 		while (nextScheduleTime < audioCtx.currentTime + 0.5) {
 			scheduleMeasure(nextScheduleTime, currentMeasure);
-			nextScheduleTime += beatDuration * 4; // 4 tiempos por compás
+			nextScheduleTime += beatDuration * 4;
 			currentMeasure++;
-			// Bucle infinito: después del compás 31, regresamos al desarrollo (compás 8) para mantener la intensidad
-			if (currentMeasure >= 32) {
+			
+			// Bucle infinito: en los temas andinos no necesitamos 31 compases obligatorios, 
+			// pero podemos resetear para variaciones.
+			if (currentSong.style === 'sad_andina_lamento' && currentMeasure >= 24) {
+				currentMeasure = 0; // El Lamento repite su ciclo emocional completo (Intro -> Dev -> Alegría)
+			} else if (currentMeasure >= 32) {
 				currentMeasure = 8;
 			}
 		}
-		setTimeout(scheduler, 100);
+		currentSchedulerTimer = setTimeout(scheduler, 100);
 	}
 	
-	scheduler(); // Iniciar bucle
+	scheduler();
 }

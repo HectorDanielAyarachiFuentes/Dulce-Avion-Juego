@@ -22,6 +22,41 @@
             <button id="start-btn">START ENGINE</button>
         </div>
     </div>
+    
+    <!-- BOTÓN DE AJUSTES -->
+    <div id="settings-btn">⚙️</div>
+    
+    <!-- MODAL DE AJUSTES -->
+    <div id="settings-modal" class="hidden">
+        <div class="board">
+            <h2>AJUSTES DE VUELO</h2>
+            
+            <div class="setting-row">
+                <label>Silenciar Música</label>
+                <input type="checkbox" id="mute-music-chk">
+            </div>
+            
+            <div class="setting-row">
+                <label>Silenciar Efectos (SFX)</label>
+                <input type="checkbox" id="mute-sfx-chk">
+            </div>
+            
+            <div class="setting-row">
+                <label>Pista de Audio</label>
+                <select id="track-select">
+                    <option value="0">1. Épica Original</option>
+                    <option value="1">2. Lamento de la Puna (Triste)</option>
+                    <option value="2">3. Vuelo Solitario (Triste)</option>
+                    <option value="3">4. Carnavalito en las Nubes (Alegre)</option>
+                    <option value="4">5. Caporal del Cielo (Alegre)</option>
+                    <option value="5">6. Nazca Espacial (Misterio/Alien)</option>
+                    <option value="6">7. Contacto en los Andes (Misterio/Alien)</option>
+                </select>
+            </div>
+            
+            <button id="close-settings-btn">CERRAR</button>
+        </div>
+    </div>
 
     <script type="module" src="js/main.js"></script>
 </body>

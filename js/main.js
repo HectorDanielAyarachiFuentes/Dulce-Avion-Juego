@@ -11,7 +11,7 @@ import { Eagle } from './objects/Eagle.js';
 import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
-import { initAudio, playShootSound, playMachineGunSound, playEpicSong } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 
 let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager;
@@ -237,10 +237,44 @@ function init() {
 	// Botón de Inicio
 	const startBtn = document.getElementById('start-btn');
 	const welcomeScreen = document.getElementById('welcome-screen');
+	
+	// Controles de Ajustes
+	const settingsBtn = document.getElementById('settings-btn');
+	const settingsModal = document.getElementById('settings-modal');
+	const closeSettingsBtn = document.getElementById('close-settings-btn');
+	const muteMusicChk = document.getElementById('mute-music-chk');
+	const muteSfxChk = document.getElementById('mute-sfx-chk');
+	const trackSelect = document.getElementById('track-select');
+	
 	startBtn.addEventListener('click', () => {
 		welcomeScreen.classList.add('hidden');
 		gameState = 'playing';
-		playEpicSong();
+		playEpicSong(); // Esto iniciará el loop procedural
+	});
+	
+	settingsBtn.addEventListener('click', () => {
+		settingsModal.classList.remove('hidden');
+		if (gameState === 'playing') gameState = 'paused'; // Pausar si estaba jugando
+	});
+	
+	closeSettingsBtn.addEventListener('click', () => {
+		settingsModal.classList.add('hidden');
+		// Si estábamos pausados, volvemos a jugar (siempre y cuando ya hayamos pasado el menu inicial)
+		if (gameState === 'paused' && welcomeScreen.classList.contains('hidden')) {
+			gameState = 'playing';
+		}
+	});
+	
+	muteMusicChk.addEventListener('change', (e) => {
+		setMusicMuted(e.target.checked);
+	});
+	
+	muteSfxChk.addEventListener('change', (e) => {
+		setSfxMuted(e.target.checked);
+	});
+	
+	trackSelect.addEventListener('change', (e) => {
+		setSongId(parseInt(e.target.value));
 	});
 
 	document.addEventListener('mousemove', handleMouseMove, false);
