@@ -8,6 +8,10 @@
   /*background: linear-gradient(#739aaf, #f7d9aa);*/
 }
 
+body.playing {
+	cursor: none;
+}
+
 /* MENU DE BIENVENIDA */
 #welcome-screen {
 	position: absolute;
@@ -156,4 +160,36 @@
 #close-settings-btn:active {
 	transform: translateY(4px);
 	box-shadow: 0 0 0 #23190f;
+}
+
+/* LEVEL UP MESSAGE */
+#level-up-message {
+	position: absolute;
+	top: 30%;
+	width: 100%;
+	text-align: center;
+	z-index: 100;
+	transition: opacity 1s ease, transform 1s ease;
+	pointer-events: none;
+}
+
+#level-up-message.hidden {
+	opacity: 0;
+	transform: scale(0.5);
+}
+
+#level-up-message h1 {
+	font-size: 80px;
+	margin: 0;
+	color: #f25346;
+	text-shadow: 4px 4px 0px #23190f;
+	letter-spacing: 5px;
+}
+
+#level-up-message p {
+	font-size: 30px;
+	margin: 0;
+	color: #ffffff;
+	text-shadow: 2px 2px 0px #23190f;
+	letter-spacing: 3px;
 }

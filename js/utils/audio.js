@@ -124,6 +124,83 @@ export function playMachineGunSound() {
 	osc.stop(now + 0.05);
 }
 
+export function playAlienLaserSound() {
+	if (!audioCtx || isSfxMuted) return;
+	const now = audioCtx.currentTime;
+	const osc = audioCtx.createOscillator();
+	osc.type = 'sawtooth';
+	osc.frequency.setValueAtTime(800, now);
+	osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+	
+	const gain = audioCtx.createGain();
+	gain.gain.setValueAtTime(0.3, now);
+	gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+	
+	osc.connect(gain);
+	gain.connect(masterSfxGain);
+	osc.start(now);
+	osc.stop(now + 0.3);
+}
+
+export function playExplosionSound() {
+	if (!audioCtx || isSfxMuted) return;
+	const now = audioCtx.currentTime;
+	
+	const noise = audioCtx.createBufferSource();
+	noise.buffer = getNoiseBuffer();
+	const noiseFilter = audioCtx.createBiquadFilter();
+	noiseFilter.type = 'lowpass';
+	noiseFilter.frequency.setValueAtTime(1000, now);
+	noiseFilter.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+	
+	const gain = audioCtx.createGain();
+	gain.gain.setValueAtTime(1.0, now);
+	gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+	
+	noise.connect(noiseFilter);
+	noiseFilter.connect(gain);
+	gain.connect(masterSfxGain);
+	
+	// Rumble
+	const osc = audioCtx.createOscillator();
+	osc.type = 'square';
+	osc.frequency.setValueAtTime(60, now);
+	osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+	const oscGain = audioCtx.createGain();
+	oscGain.gain.setValueAtTime(0.5, now);
+	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+	osc.connect(oscGain);
+	oscGain.connect(masterSfxGain);
+	
+	noise.start(now);
+	noise.stop(now + 0.5);
+	osc.start(now);
+	osc.stop(now + 0.5);
+}
+
+export function playRescueSound() {
+	if (!audioCtx || isSfxMuted) return;
+	const now = audioCtx.currentTime;
+	
+	const osc = audioCtx.createOscillator();
+	osc.type = 'sine';
+	osc.frequency.setValueAtTime(440, now);
+	osc.frequency.setValueAtTime(554.37, now + 0.1); // C#
+	osc.frequency.setValueAtTime(659.25, now + 0.2); // E
+	osc.frequency.setValueAtTime(880, now + 0.3); // A
+	
+	const gain = audioCtx.createGain();
+	gain.gain.setValueAtTime(0, now);
+	gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+	gain.gain.setValueAtTime(0.5, now + 0.3);
+	gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+	
+	osc.connect(gain);
+	gain.connect(masterSfxGain);
+	osc.start(now);
+	osc.stop(now + 0.5);
+}
+
 // BSO: Secuenciador Procedural Avanzado (7 Canciones)
 export function playEpicSong() {
 	initAudio();

@@ -103,6 +103,7 @@ export const MissileProjectile = function(x, y, z) {
 	this.mesh.position.set(x, y, z);
 	
 	this.speed = 6; // Velocidad reducida para apreciar la estela
+	this.active = true;
 };
 
 MissileProjectile.prototype.update = function() {
@@ -124,6 +125,7 @@ export const MachineGunProjectile = function(x, y, z) {
 	this.mesh.position.set(x, y, z);
 	
 	this.speed = 30; // Más veloz
+	this.active = true;
 };
 
 MachineGunProjectile.prototype.update = function() {

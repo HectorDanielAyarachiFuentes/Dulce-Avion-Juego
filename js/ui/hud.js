@@ -21,6 +21,11 @@ export const HUD = {
 	missiles: [],
 	heatBarScale: null,
 	heatBarMat: null,
+	energyBarScale: null,
+	energyBarMat: null,
+	scoreSprite: null,
+	scoreCanvasCtx: null,
+	scoreTexture: null,
 	activeMat: null,
 	inactiveMat: null,
 
@@ -42,6 +47,48 @@ export const HUD = {
 		const frame = new THREE.Mesh(frameGeom, frameMat);
 		frame.position.set(-3, -2, -2.5);
 		this.mesh.add(frame);
+
+		// Miniature Icons
+		const iconMissileGeom = new THREE.BoxGeometry(4, 4, 1);
+		const iconMissileMat = new THREE.MeshPhongMaterial({ color: Colors.white, flatShading: true });
+		const iconMissile = new THREE.Mesh(iconMissileGeom, iconMissileMat);
+		iconMissile.position.set(-1, 1.5, 0);
+		this.mesh.add(iconMissile);
+		
+		const iconGunGeom = new THREE.BoxGeometry(4, 2, 1);
+		const iconGunMat = new THREE.MeshPhongMaterial({ color: Colors.yellow, flatShading: true });
+		const iconGun = new THREE.Mesh(iconGunGeom, iconGunMat);
+		iconGun.position.set(-1, -5.5, 0);
+		this.mesh.add(iconGun);
+		
+		// SCORE DISPLAY (Canvas Dinámico)
+		const sCanvas = document.createElement('canvas');
+		this.scoreCanvasCtx = sCanvas.getContext('2d');
+		sCanvas.width = 512;
+		sCanvas.height = 128;
+		this.scoreTexture = new THREE.CanvasTexture(sCanvas);
+		const sMat = new THREE.MeshBasicMaterial({ map: this.scoreTexture, transparent: true });
+		const sGeom = new THREE.PlaneGeometry(25, 6);
+		this.scoreSprite = new THREE.Mesh(sGeom, sMat);
+		this.scoreSprite.position.set(13, 5.5, 0);
+		this.mesh.add(this.scoreSprite);
+		this.updateScore(0);
+		
+		// ENERGY BAR (Vida)
+		const energyBgGeom = new THREE.BoxGeometry(20, 3, 0.5);
+		const energyBgMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+		const energyBg = new THREE.Mesh(energyBgGeom, energyBgMat);
+		energyBg.position.set(13.5, 0.5, 0);
+		this.mesh.add(energyBg);
+		
+		const energyBarGeom = new THREE.BoxGeometry(19, 2, 0.5);
+		// Inicialmente verde
+		this.energyBarMat = new THREE.MeshPhongMaterial({ color: Colors.green, flatShading: true });
+		const energyBar = new THREE.Mesh(energyBarGeom, this.energyBarMat);
+		energyBar.geometry.translate(9.5, 0, 0); // Eje a la izquierda
+		energyBar.position.set(13.5 - 9.5, 0.5, 0.1);
+		this.energyBarScale = energyBar;
+		this.mesh.add(energyBar);
 		
 		// Inclinación 3D para darle volumen de "tablero físico"
 		this.mesh.rotation.y = 0.1;
@@ -56,30 +103,6 @@ export const HUD = {
 		const gunText = createTextSprite("ARMA", "white");
 		gunText.position.set(-13, -5.5, 0);
 		this.mesh.add(gunText);
-		
-		// Miniature Icons
-		const iconMissile = new THREE.Object3D();
-		const mBodyGeom = new THREE.CylinderGeometry(0.5, 0.5, 4, 6);
-		mBodyGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI/2));
-		const mTipGeom = new THREE.ConeGeometry(0.5, 1.5, 6);
-		mTipGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(-Math.PI/2));
-		mTipGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(2.75, 0, 0));
-		const mBody = new THREE.Mesh(mBodyGeom, new THREE.MeshPhongMaterial({ color: Colors.white, flatShading: true }));
-		const mTip = new THREE.Mesh(mTipGeom, new THREE.MeshPhongMaterial({ color: Colors.red, flatShading: true }));
-		iconMissile.add(mBody);
-		iconMissile.add(mTip);
-		iconMissile.position.set(-2, 1.5, 0);
-		
-		this.mesh.add(iconMissile);
-		
-		const iconGunGeom = new THREE.CylinderGeometry(0.5, 0.5, 4, 6);
-		iconGunGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI/2));
-		const iconGun = new THREE.Mesh(
-			iconGunGeom,
-			new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true })
-		);
-		iconGun.position.set(-2, -5.5, 0);
-		this.mesh.add(iconGun);
 		
 		// Misiles (8 Cubes)
 		const missileGeom = new THREE.BoxGeometry(2, 2, 2);
@@ -148,6 +171,29 @@ export const HUD = {
 					this.heatBarMat.color.setHex(Colors.greenDark);
 				}
 			}
+		}
+	},
+
+	updateScore: function(score) {
+		const ctx = this.scoreCanvasCtx;
+		ctx.clearRect(0, 0, 512, 128);
+		ctx.font = "Bold 55px Arial";
+		ctx.fillStyle = "#f25346"; // Rojo
+		ctx.fillText("SCORE", 0, 80);
+		ctx.fillStyle = "#ffffff";
+		ctx.fillText(score.toString().padStart(6, '0'), 250, 80);
+		this.scoreTexture.needsUpdate = true;
+	},
+	
+	updateEnergy: function(energyPercentage) { // 0 a 100
+		const scale = Math.max(0.01, energyPercentage / 100);
+		this.energyBarScale.scale.x = scale;
+		if (energyPercentage > 60) {
+			this.energyBarMat.color.setHex(Colors.green);
+		} else if (energyPercentage > 30) {
+			this.energyBarMat.color.setHex(Colors.yellow);
+		} else {
+			this.energyBarMat.color.setHex(Colors.red);
 		}
 	},
 	

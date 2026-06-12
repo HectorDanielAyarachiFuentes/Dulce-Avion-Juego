@@ -1,5 +1,5 @@
 import { scene, camera, renderer, createScene } from './scene.js';
-import { createLights } from './lights.js';
+import { createLights, ambientLight, hemisphereLight } from './lights.js';
 import { normalize } from './utils/math.js';
 import { Sea } from './objects/Sea.js';
 import { Mountains } from './objects/Mountains.js';
@@ -11,17 +11,85 @@ import { Eagle } from './objects/Eagle.js';
 import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
-import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId } from './utils/audio.js';
+import { EnemyManager } from './objects/Enemies.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager;
 let mousePos = { x: 0, y: 0 };
 let isShootingMG = false;
 let mgTimer = 0;
 let reloadTimer = 0;
 let machineGunHeat = 0;
 let isOverheated = false;
-let gameState = 'menu';
+
+// Global Game State
+let score = 0;
+let energy = 100;
+let gameState = 'welcome'; // 'welcome', 'playing', 'paused'
+let currentLevel = 1;
+
+function checkLevelUp() {
+	let newLevel = 1;
+	if (score >= 7000) newLevel = 4;
+	else if (score >= 3500) newLevel = 3;
+	else if (score >= 1500) newLevel = 2;
+	
+	if (newLevel > currentLevel) {
+		currentLevel = newLevel;
+		showLevelUpMessage();
+		updateEnvironmentColor();
+	}
+}
+
+function showLevelUpMessage() {
+	const msgBox = document.getElementById('level-up-message');
+	const levelText = document.getElementById('level-text');
+	const levelSubtext = document.getElementById('level-subtext');
+	
+	levelText.innerText = "NIVEL " + currentLevel;
+	if (currentLevel === 2) levelSubtext.innerText = "ATARDECER ROJO";
+	if (currentLevel === 3) levelSubtext.innerText = "NOCHE OSCURA";
+	if (currentLevel === 4) levelSubtext.innerText = "TORMENTA FINAL";
+	
+	msgBox.classList.remove('hidden');
+	setTimeout(() => {
+		msgBox.classList.add('hidden');
+	}, 3000);
+}
+
+function updateEnvironmentColor() {
+	const aviator = document.querySelector('.aviator');
+	
+	if (currentLevel === 1) { // Día Claro
+		aviator.style.background = 'linear-gradient(#3b5764, #739aaf)';
+		scene.fog.color.setHex(0xf7d9aa);
+		ambientLight.color.setHex(0xdc8874);
+		ambientLight.intensity = 0.5;
+		hemisphereLight.intensity = 0.9;
+	} 
+	else if (currentLevel === 2) { // Atardecer
+		aviator.style.background = 'linear-gradient(#e44d2e, #f2a878)';
+		scene.fog.color.setHex(0xf2a878);
+		ambientLight.color.setHex(0xdc8874);
+		ambientLight.intensity = 0.8;
+		hemisphereLight.intensity = 0.6;
+	}
+	else if (currentLevel === 3) { // Noche Oscura
+		aviator.style.background = 'linear-gradient(#08131a, #1a2a36)';
+		scene.fog.color.setHex(0x1a2a36);
+		ambientLight.color.setHex(0x555577);
+		ambientLight.intensity = 0.3;
+		hemisphereLight.intensity = 0.3;
+	}
+	else if (currentLevel === 4) { // Tormenta
+		aviator.style.background = 'linear-gradient(#111111, #333333)';
+		scene.fog.color.setHex(0x222222);
+		ambientLight.color.setHex(0x444455);
+		ambientLight.intensity = 0.2;
+		hemisphereLight.intensity = 0.2;
+	}
+}
 
 function createSea() {
 	sea = new Sea();
@@ -109,6 +177,17 @@ function updatePlane() {
 	airplane.mesh.rotation.y = (targetX - airplane.mesh.position.x) * -0.005;
 
 	airplane.propeller.rotation.x += 0.3;
+	
+	// Daño visual (Humo si la vida baja del 50%)
+	if (energy < 50) {
+		if (Math.random() < (50 - energy) * 0.015) { // Mientras menos vida, más humo
+			const p = airplane.mesh.position;
+			weaponManager.spawnSmoke(p.x - 20, p.y + 10, p.z);
+			if (energy < 20 && Math.random() > 0.5) {
+				weaponManager.spawnSpark(p.x - 20, p.y + 10, p.z); // Chispas si está crítico
+			}
+		}
+	}
 }
 
 function handleMouseMove(event) {
@@ -161,6 +240,21 @@ function loop() {
 	sky.mesh.rotation.z += .004;
 	grass.mesh.rotation.z += .002;
 	rocks.mesh.rotation.z += .002;
+	
+	// Efecto de relámpagos en el nivel 4
+	if (currentLevel === 4) {
+		if (Math.random() < 0.02) {
+			// Destello intenso
+			ambientLight.intensity = 3.0;
+			scene.fog.color.setHex(0xffffff);
+			document.querySelector('.aviator').style.background = 'linear-gradient(#ffffff, #aaaaaa)';
+		} else {
+			// Volver rápido a la oscuridad
+			ambientLight.intensity += (0.2 - ambientLight.intensity) * 0.1;
+			scene.fog.color.lerp(new THREE.Color(0x222222), 0.1);
+			document.querySelector('.aviator').style.background = 'linear-gradient(#111111, #333333)';
+		}
+	}
 
 	if (gameState === 'playing') {
 		airplane.pilot.updateHairs();
@@ -207,6 +301,70 @@ function loop() {
 			reloadTimer = 0;
 		}
 		
+		// Update Enemies
+		enemyManager.update(Date.now(), () => {
+			playAlienLaserSound();
+		});
+		
+		// Collision Logic
+		const planePos = airplane.mesh.position;
+		
+		// 1. Lasers vs Airplane
+		for (let i = enemyManager.lasers.length - 1; i >= 0; i--) {
+			const laser = enemyManager.lasers[i];
+			if (laser.active && laser.mesh.position.distanceTo(planePos) < 20) {
+				laser.active = false; // Destroy laser
+				energy -= 10;
+				HUD.updateEnergy(energy);
+				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
+				
+				if (energy <= 0) {
+					// Reiniciamos sin pantalla de game over para no interrumpir
+					energy = 100;
+					score = 0;
+					HUD.updateEnergy(energy);
+					HUD.updateScore(score);
+				}
+			}
+		}
+		
+		// 2. Projectiles vs UFOs
+		for (let i = weaponManager.projectiles.length - 1; i >= 0; i--) {
+			const proj = weaponManager.projectiles[i];
+			if (!proj.active) continue; // Proyectiles no tienen .active nativo aún, pero lo manejamos
+			
+			for (let j = enemyManager.ufos.length - 1; j >= 0; j--) {
+				const ufo = enemyManager.ufos[j];
+				if (!ufo.active) continue;
+				
+				if (proj.mesh.position.distanceTo(ufo.mesh.position) < 25) {
+					// Hit
+					ufo.hitPoints--;
+					if (proj.speed < 10) ufo.hitPoints -= 2; // Misiles hacen más daño
+					
+					proj.mesh.position.x += 1000; // Move out of screen instead of complex splice logic for now
+					weaponManager.spawnSpark(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
+					
+					if (ufo.hitPoints <= 0) {
+						ufo.active = false;
+						playExplosionSound();
+						weaponManager.spawnSmoke(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
+						
+						score += 100;
+						
+						// Rescue check
+						if (enemyManager.releaseCaptive(ufo)) {
+							playRescueSound();
+							score += 500; // 500 points por salvar a la vaca/humano
+						}
+						HUD.updateScore(score);
+						checkLevelUp();
+					}
+					break; // Projectile destroyed, check next
+				}
+			}
+		}
+		
 		// Update Weapons and HUD
 		weaponManager.update();
 		HUD.updatePosition(camera.aspect);
@@ -232,7 +390,10 @@ function init() {
 	createRocks();
 	
 	weaponManager = new WeaponManager(scene);
+	enemyManager = new EnemyManager(scene);
 	HUD.init(camera);
+	HUD.updateScore(score);
+	HUD.updateEnergy(energy);
 	
 	// Botón de Inicio
 	const startBtn = document.getElementById('start-btn');
@@ -249,12 +410,16 @@ function init() {
 	startBtn.addEventListener('click', () => {
 		welcomeScreen.classList.add('hidden');
 		gameState = 'playing';
+		document.body.classList.add('playing');
 		playEpicSong(); // Esto iniciará el loop procedural
 	});
 	
 	settingsBtn.addEventListener('click', () => {
 		settingsModal.classList.remove('hidden');
-		if (gameState === 'playing') gameState = 'paused'; // Pausar si estaba jugando
+		if (gameState === 'playing') {
+			gameState = 'paused'; // Pausar si estaba jugando
+			document.body.classList.remove('playing');
+		}
 	});
 	
 	closeSettingsBtn.addEventListener('click', () => {
@@ -262,6 +427,7 @@ function init() {
 		// Si estábamos pausados, volvemos a jugar (siempre y cuando ya hayamos pasado el menu inicial)
 		if (gameState === 'paused' && welcomeScreen.classList.contains('hidden')) {
 			gameState = 'playing';
+			document.body.classList.add('playing');
 		}
 	});
 	
