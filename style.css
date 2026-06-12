@@ -4,5 +4,6 @@
 	height: 100%;
 	overflow: hidden;
 	background: linear-gradient(#3b5764, #739aaf);
+	cursor: none;
   /*background: linear-gradient(#739aaf, #f7d9aa);*/
 }

@@ -26,6 +26,28 @@ SmokeParticle.prototype.update = function() {
 	this.mesh.rotation.z += 0.05;
 };
 
+export const SparkParticle = function(x, y, z) {
+	this.mesh = new THREE.Mesh(
+		new THREE.BoxGeometry(1.5, 1.5, 1.5),
+		new THREE.MeshBasicMaterial({ color: Colors.yellow, transparent: true, opacity: 1.0 })
+	);
+	this.mesh.position.set(
+		x + (Math.random() - 0.5) * 2,
+		y + (Math.random() - 0.5) * 2,
+		z + (Math.random() - 0.5) * 2
+	);
+	this.scale = 1;
+	this.life = 1.0;
+};
+
+SparkParticle.prototype.update = function() {
+	this.scale *= 0.8; // Shrink quickly
+	this.mesh.scale.set(this.scale, this.scale, this.scale);
+	this.life -= 0.15; // Fade out very fast
+	this.mesh.material.opacity = this.life;
+	this.mesh.position.x -= 10; // Fast drift backwards
+};
+
 export const MissileProjectile = function(x, y, z) {
 	this.mesh = new THREE.Object3D();
 	
@@ -106,6 +128,12 @@ export const WeaponManager = function(scene) {
 		this.particles.push(s);
 	};
 	
+	this.spawnSpark = function(x, y, z) {
+		const s = new SparkParticle(x, y, z);
+		this.scene.add(s.mesh);
+		this.particles.push(s);
+	};
+	
 	this.update = function() {
 		// Update Projectiles
 		for(let i=this.projectiles.length-1; i>=0; i--) {
@@ -117,6 +145,11 @@ export const WeaponManager = function(scene) {
 				// Soltar partículas de humo detrás del misil
 				if (Math.random() > 0.2) {
 					this.spawnSmoke(p.mesh.position.x - 15, p.mesh.position.y, p.mesh.position.z);
+				}
+			} else if (p instanceof MachineGunProjectile) {
+				// Soltar chispas brillantes detrás de las balas
+				if (Math.random() > 0.4) {
+					this.spawnSpark(p.mesh.position.x - 5, p.mesh.position.y, p.mesh.position.z);
 				}
 			}
 			
