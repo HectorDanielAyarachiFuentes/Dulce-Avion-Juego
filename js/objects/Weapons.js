@@ -29,7 +29,7 @@ export const MissileProjectile = function(x, y, z) {
 	
 	this.mesh.position.set(x, y, z);
 	
-	this.speed = 15;
+	this.speed = 6; // Velocidad reducida para apreciar la estela
 };
 
 MissileProjectile.prototype.update = function() {

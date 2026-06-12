@@ -18,6 +18,7 @@ let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponMan
 let mousePos = { x: 0, y: 0 };
 let isShootingMG = false;
 let mgTimer = 0;
+let reloadTimer = 0;
 
 function createSea() {
 	sea = new Sea();
@@ -165,6 +166,18 @@ function loop() {
 			const p = airplane.mesh.position;
 			weaponManager.fireMachineGun(p.x + 55, p.y - 10, p.z);
 		}
+	}
+	
+	// Auto-reload system
+	if (airplane.ammo < 8) {
+		reloadTimer++;
+		if (reloadTimer > 180) { // Approx 3 seconds to reload 1 missile
+			airplane.reloadMissile();
+			HUD.updateAmmo(airplane.ammo);
+			reloadTimer = 0;
+		}
+	} else {
+		reloadTimer = 0;
 	}
 	
 	weaponManager.update();

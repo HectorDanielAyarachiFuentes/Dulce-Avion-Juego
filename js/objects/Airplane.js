@@ -208,8 +208,15 @@ export const AirPlane = function () {
 		const tip = new THREE.Mesh(tipGeom, tipMat);
 		body.castShadow = true;
 		tip.castShadow = true;
+		const rackGeom = new THREE.BoxGeometry(2, 5, 2);
+		const rackMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
+		const rack = new THREE.Mesh(rackGeom, rackMat);
+		rack.position.set(0, 3, 0); // Conecta el misil al ala
+		rack.castShadow = true;
+		
 		mContainer.add(body);
 		mContainer.add(tip);
+		mContainer.add(rack);
 		
 		let zPos = 0;
 		if (i < 4) {
@@ -232,6 +239,16 @@ AirPlane.prototype.fireMissile = function() {
 		this.ammo--;
 		const missileVisual = this.missileMeshes[this.ammo];
 		missileVisual.visible = false;
+		return true;
+	}
+	return false;
+};
+
+AirPlane.prototype.reloadMissile = function() {
+	if (this.ammo < 8) {
+		const missileVisual = this.missileMeshes[this.ammo];
+		missileVisual.visible = true;
+		this.ammo++;
 		return true;
 	}
 	return false;
