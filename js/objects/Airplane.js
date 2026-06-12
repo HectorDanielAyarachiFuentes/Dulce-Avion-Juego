@@ -176,6 +176,15 @@ export const AirPlane = function () {
 	this.propeller.add(blade);
 	this.propeller.position.set(50, 0, 0);
 	this.mesh.add(this.propeller);
+	
+	// Cañón Frontal
+	const cannonGeom = new THREE.CylinderGeometry(2, 2, 20, 8);
+	cannonGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI/2));
+	const cannonMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+	const cannon = new THREE.Mesh(cannonGeom, cannonMat);
+	cannon.position.set(55, -10, 0);
+	cannon.castShadow = true;
+	this.mesh.add(cannon);
 
 	this.pilot = new Pilot();
 	this.pilot.mesh.position.set(-10, 27, 0);

@@ -32,3 +32,26 @@ export function playShootSound() {
 	osc.start(now);
 	osc.stop(now + 0.15);
 }
+
+export function playMachineGunSound() {
+	if (!audioCtx) return;
+	
+	const osc = audioCtx.createOscillator();
+	const gainNode = audioCtx.createGain();
+	
+	osc.connect(gainNode);
+	gainNode.connect(audioCtx.destination);
+	
+	osc.type = 'sawtooth';
+	
+	const now = audioCtx.currentTime;
+	
+	osc.frequency.setValueAtTime(150, now);
+	osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+	
+	gainNode.gain.setValueAtTime(0.2, now);
+	gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+	
+	osc.start(now);
+	osc.stop(now + 0.05);
+}

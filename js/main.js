@@ -11,11 +11,13 @@ import { Eagle } from './objects/Eagle.js';
 import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
-import { initAudio, playShootSound } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 
 let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager;
 let mousePos = { x: 0, y: 0 };
+let isShootingMG = false;
+let mgTimer = 0;
 
 function createSea() {
 	sea = new Sea();
@@ -110,18 +112,32 @@ function handleMouseMove(event) {
 	mousePos = { x: tx, y: ty };
 }
 
-function handleKeyDown(event) {
-	if (event.code === 'Space') {
-		initAudio();
+function handleMouseDown(event) {
+	event.preventDefault();
+	initAudio();
+	
+	if (event.button === 0) { // Left click
+		isShootingMG = true;
+	} else if (event.button === 2) { // Right click
 		if (airplane.fireMissile()) {
 			playShootSound();
 			HUD.updateAmmo(airplane.ammo);
 			
-			// Fire projectile from airplane's position (slightly ahead)
 			const p = airplane.mesh.position;
-			weaponManager.fire(p.x + 40, p.y - 5, p.z);
+			// El misil sale de más abajo (alas)
+			weaponManager.fireMissile(p.x + 40, p.y - 5, p.z);
 		}
 	}
+}
+
+function handleMouseUp(event) {
+	if (event.button === 0) {
+		isShootingMG = false;
+	}
+}
+
+function handleContextMenu(event) {
+	event.preventDefault();
 }
 
 function loop() {
@@ -140,6 +156,17 @@ function loop() {
 	sea.moveWaves(); 
 	updatePlane();
 	updateEagle();
+	
+	if (isShootingMG) {
+		mgTimer++;
+		if (mgTimer > 3) {
+			mgTimer = 0;
+			playMachineGunSound();
+			const p = airplane.mesh.position;
+			weaponManager.fireMachineGun(p.x + 55, p.y - 10, p.z);
+		}
+	}
+	
 	weaponManager.update();
 
 	renderer.render(scene, camera);
@@ -164,7 +191,9 @@ function init() {
 	HUD.init();
 
 	document.addEventListener('mousemove', handleMouseMove, false);
-	document.addEventListener('keydown', handleKeyDown, false);
+	document.addEventListener('mousedown', handleMouseDown, false);
+	document.addEventListener('mouseup', handleMouseUp, false);
+	document.addEventListener('contextmenu', handleContextMenu, false);
 	loop();
 }
 
