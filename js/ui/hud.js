@@ -33,14 +33,14 @@ export const HUD = {
 		this.mesh = new THREE.Object3D();
 		this.mesh.position.set(0, 0, -100);
 		
-		// HUD Panel Background (Más grande para acomodar 4 filas)
-		const panelGeom = new THREE.BoxGeometry(65, 26, 0.5);
+		// HUD Panel Background (Más grande para acomodar el retrato a la derecha)
+		const panelGeom = new THREE.BoxGeometry(90, 26, 0.5);
 		const panelMat = new THREE.MeshPhongMaterial({ color: Colors.brown, flatShading: true });
 		const panel = new THREE.Mesh(panelGeom, panelMat);
 		panel.position.set(0, 0, -2);
 		this.mesh.add(panel);
 
-		const frameGeom = new THREE.BoxGeometry(67, 28, 0.2);
+		const frameGeom = new THREE.BoxGeometry(92, 28, 0.2);
 		const frameMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
 		const frame = new THREE.Mesh(frameGeom, frameMat);
 		frame.position.set(0, 0, -2.5);
@@ -60,32 +60,32 @@ export const HUD = {
 		const sMat = new THREE.MeshBasicMaterial({ map: this.scoreTexture, transparent: true });
 		const sGeom = new THREE.PlaneGeometry(30, 7);
 		this.scoreSprite = new THREE.Mesh(sGeom, sMat);
-		this.scoreSprite.position.set(0, 8, 0); // Centrado en la parte superior
+		this.scoreSprite.position.set(-12, 8, 0); // Movido a la izquierda
 		this.mesh.add(this.scoreSprite);
 		this.updateScore(0);
 		
 		// --- ROW 2: ENERGÍA / VIDA (Y = 2) ---
 		const energyText = createTextSprite("VIDA", "white");
-		energyText.position.set(-18, 2, 0);
+		energyText.position.set(-30, 2, 0);
 		this.mesh.add(energyText);
 
 		const energyBgGeom = new THREE.BoxGeometry(30, 3, 0.5);
 		const energyBgMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
 		const energyBg = new THREE.Mesh(energyBgGeom, energyBgMat);
-		energyBg.position.set(7, 2, -0.5);
+		energyBg.position.set(-5, 2, -0.5);
 		this.mesh.add(energyBg);
 		
 		const energyBarGeom = new THREE.BoxGeometry(29, 2, 0.5);
 		this.energyBarMat = new THREE.MeshPhongMaterial({ color: Colors.green, flatShading: true });
 		const energyBar = new THREE.Mesh(energyBarGeom, this.energyBarMat);
 		energyBar.geometry.translate(14.5, 0, 0); // Eje a la izquierda
-		energyBar.position.set(-7.5, 2, 0);
+		energyBar.position.set(-19.5, 2, 0);
 		this.energyBarScale = energyBar;
 		this.mesh.add(energyBar);
 		
 		// --- ROW 3: MISILES (Y = -4) ---
 		const missileText = createTextSprite("MISILES", "white");
-		missileText.position.set(-18, -4, 0);
+		missileText.position.set(-30, -4, 0);
 		this.mesh.add(missileText);
 		
 		const missileGeom = new THREE.BoxGeometry(2.5, 2.5, 2.5);
@@ -93,26 +93,26 @@ export const HUD = {
 		this.inactiveMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
 		for(let i=0; i<8; i++) {
 			const m = new THREE.Mesh(missileGeom, this.activeMat);
-			m.position.set(-5 + (i * 3.5), -4, 0);
+			m.position.set(-17 + (i * 3.5), -4, 0);
 			this.mesh.add(m);
 			this.missiles.push(m);
 		}
 		
 		// --- ROW 4: ARMA CALENTAMIENTO (Y = -10) ---
 		const gunText = createTextSprite("ARMA", "white");
-		gunText.position.set(-18, -10, 0);
+		gunText.position.set(-30, -10, 0);
 		this.mesh.add(gunText);
 		
 		const bgGeom = new THREE.BoxGeometry(30, 2, 1);
 		const bgBar = new THREE.Mesh(bgGeom, energyBgMat);
-		bgBar.position.set(7, -10, -0.5);
+		bgBar.position.set(-5, -10, -0.5);
 		this.mesh.add(bgBar);
 		
 		const fillGeom = new THREE.BoxGeometry(29, 1.5, 1.5);
 		fillGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(14.5, 0, 0));
 		this.heatBarMat = new THREE.MeshPhongMaterial({ color: Colors.greenDark, flatShading: true });
 		this.heatBarScale = new THREE.Mesh(fillGeom, this.heatBarMat);
-		this.heatBarScale.position.set(-7.5, -10, 0);
+		this.heatBarScale.position.set(-19.5, -10, 0);
 		this.heatBarScale.scale.x = 0.001; 
 		this.mesh.add(this.heatBarScale);
 		
@@ -212,8 +212,8 @@ export const HUD = {
 			const scale = 0.6; // Reducir el tamaño del panel
 			this.mesh.scale.set(scale, scale, scale);
 			
-			// Ancho original 65, mitad 32.5. Escalado es 32.5 * scale
-			const targetX = leftX + (32.5 * scale) + 2; 
+			// Ancho original 90, mitad 45. Escalado es 45 * scale
+			const targetX = leftX + (45 * scale) + 2; 
 			// Alto original 26, mitad 13. Escalado es 13 * scale
 			const targetY = topY - (13 * scale) - 2;
 			
@@ -232,6 +232,63 @@ export const HUD = {
 			this.gearMesh.position.set(rightX - (5 * scale) - 3, topY - (5 * scale) - 3, -zDist);
 			// Rotarla un poco contínuamente
 			this.gearMesh.rotation.z -= 0.01;
+		}
+	},
+	
+	addMiniPlane: function(miniMesh) {
+		const frameGeom = new THREE.BoxGeometry(24, 24, 1);
+		const frameMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+		const frame = new THREE.Mesh(frameGeom, frameMat);
+		frame.position.set(28, -1, 0);
+		this.mesh.add(frame);
+		
+		const bgGeom = new THREE.BoxGeometry(22, 22, 1);
+		this.miniBgMat = new THREE.MeshPhongMaterial({ color: 0xf7d9aa, flatShading: true });
+		const bg = new THREE.Mesh(bgGeom, this.miniBgMat);
+		bg.position.set(28, -1, 0.5);
+		this.mesh.add(bg);
+
+		this.miniPlane = miniMesh;
+		this.miniPlane.scale.set(0.12, 0.12, 0.12);
+		this.miniPlane.position.set(28, -1, 6); // Destacar desde el fondo
+		
+		// Destello de disparo (Sphere)
+		this.miniFlashMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0 });
+		const flashGeom = new THREE.SphereGeometry(20, 8, 8);
+		this.miniFlash = new THREE.Mesh(flashGeom, this.miniFlashMat);
+		this.miniFlash.position.set(65, -10, 0); // Frente al cañón (posición local)
+		this.miniPlane.add(this.miniFlash);
+		
+		this.mesh.add(this.miniPlane);
+	},
+	
+	updateMiniPlane: function(mainAirplane) {
+		if (!this.miniPlane) return;
+		this.miniPlane.rotation.copy(mainAirplane.mesh.rotation);
+		
+		// Rotar también la hélice del mini avión
+		this.miniPlane.children.forEach(child => {
+			if (child.position.x === 50 && child.position.y === 0) { 
+				child.rotation.x = mainAirplane.propeller.rotation.x;
+			}
+		});
+		
+		// Decaer el destello
+		if (this.miniFlashMat && this.miniFlashMat.opacity > 0) {
+			this.miniFlashMat.opacity -= 0.1;
+		}
+	},
+	
+	updateMiniPlaneBgColor: function(hexColor) {
+		if (this.miniBgMat) {
+			this.miniBgMat.color.setHex(hexColor);
+		}
+	},
+	
+	showMiniFlash: function(colorHex) {
+		if (this.miniFlashMat) {
+			this.miniFlashMat.color.setHex(colorHex || 0xffff00);
+			this.miniFlashMat.opacity = 1.0;
 		}
 	}
 };

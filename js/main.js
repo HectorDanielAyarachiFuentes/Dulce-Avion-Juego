@@ -68,6 +68,7 @@ function updateEnvironmentColor() {
 		ambientLight.color.setHex(0xdc8874);
 		ambientLight.intensity = 0.5;
 		hemisphereLight.intensity = 0.9;
+		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x3b5764);
 	} 
 	else if (currentLevel === 2) { // Atardecer
 		aviator.style.background = 'linear-gradient(#e44d2e, #f2a878)';
@@ -82,6 +83,7 @@ function updateEnvironmentColor() {
 		ambientLight.color.setHex(0x555577);
 		ambientLight.intensity = 0.3;
 		hemisphereLight.intensity = 0.3;
+		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x08131a);
 	}
 	else if (currentLevel === 4) { // Tormenta
 		aviator.style.background = 'linear-gradient(#111111, #333333)';
@@ -272,6 +274,8 @@ function handleMouseDown(event) {
 			const p = airplane.mesh.position;
 			// El misil sale de más abajo (alas)
 			weaponManager.fireMissile(p.x + 40, p.y - 5, p.z);
+			
+			if (HUD.showMiniFlash) HUD.showMiniFlash(0xff8800); // Naranja para misiles
 		}
 	}
 }
@@ -349,6 +353,7 @@ function loop() {
 				// La bala y el humo salen de la punta exacta del cañón (x=65, y=-10)
 				weaponManager.fireMachineGun(p.x + 65, p.y - 10, p.z);
 				weaponManager.spawnMuzzleSmoke(p.x + 65, p.y - 10, p.z);
+				if (HUD.showMiniFlash) HUD.showMiniFlash(0xffff00); // Amarillo para ametralladora
 			}
 			
 			machineGunHeat += 1.5;
@@ -478,6 +483,7 @@ function loop() {
 		// Update Weapons and HUD
 		weaponManager.update();
 		HUD.updatePosition(camera.aspect);
+		HUD.updateMiniPlane(airplane);
 	}
 
 	renderer.render(scene, camera);
@@ -503,6 +509,7 @@ function init() {
 	weaponManager = new WeaponManager(scene);
 	enemyManager = new EnemyManager(scene);
 	HUD.init(camera);
+	HUD.addMiniPlane(airplane.mesh.clone());
 	HUD.updateScore(score);
 	HUD.updateEnergy(energy);
 	
