@@ -516,6 +516,7 @@ function init() {
 	const muteMusicChk = document.getElementById('mute-music-chk');
 	const muteSfxChk = document.getElementById('mute-sfx-chk');
 	const trackSelect = document.getElementById('track-select');
+	const planeColorSelect = document.getElementById('plane-color-select');
 	
 	startBtn.addEventListener('click', () => {
 		welcomeScreen.classList.add('hidden');
@@ -545,6 +546,12 @@ function init() {
 	trackSelect.addEventListener('change', (e) => {
 		setSongId(parseInt(e.target.value));
 	});
+
+	if (planeColorSelect) {
+		planeColorSelect.addEventListener('change', (e) => {
+			airplane.applyStyle(parseInt(e.target.value));
+		});
+	}
 
 	document.addEventListener('mousemove', handleMouseMove, false);
 	document.addEventListener('mousedown', handleMouseDown, false);

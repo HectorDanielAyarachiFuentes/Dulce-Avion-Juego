@@ -98,7 +98,7 @@ export const AirPlane = function () {
 	this.mesh = new THREE.Object3D();
 
 	const geomCockpit = new THREE.BoxGeometry(80, 50, 50, 1, 1, 1);
-	const matCockpit = new THREE.MeshPhongMaterial({
+	this.matCockpit = new THREE.MeshPhongMaterial({
 		color: Colors.red,
 		flatShading: true
 	});
@@ -117,39 +117,39 @@ export const AirPlane = function () {
 		pos.setXYZ(i, x, y, z);
 	}
 
-	const cockpit = new THREE.Mesh(geomCockpit, matCockpit);
+	const cockpit = new THREE.Mesh(geomCockpit, this.matCockpit);
 	cockpit.castShadow = true;
 	cockpit.receiveShadow = true;
 	this.mesh.add(cockpit);
 
 	const geomEngine = new THREE.BoxGeometry(20, 50, 50, 1, 1, 1);
-	const matEngine = new THREE.MeshPhongMaterial({
+	this.matEngine = new THREE.MeshPhongMaterial({
 		color: Colors.white,
 		flatShading: true
 	});
-	const engine = new THREE.Mesh(geomEngine, matEngine);
+	const engine = new THREE.Mesh(geomEngine, this.matEngine);
 	engine.position.x = 40;
 	engine.castShadow = true;
 	engine.receiveShadow = true;
 	this.mesh.add(engine);
 
 	const geomTailPlane = new THREE.BoxGeometry(15, 20, 5, 1, 1, 1);
-	const matTailPlane = new THREE.MeshPhongMaterial({
+	this.matTailPlane = new THREE.MeshPhongMaterial({
 		color: Colors.red,
 		flatShading: true
 	});
-	const tailPlane = new THREE.Mesh(geomTailPlane, matTailPlane);
+	const tailPlane = new THREE.Mesh(geomTailPlane, this.matTailPlane);
 	tailPlane.position.set(-35, 25, 0);
 	tailPlane.castShadow = true;
 	tailPlane.receiveShadow = true;
 	this.mesh.add(tailPlane);
 
 	const geomSideWing = new THREE.BoxGeometry(40, 8, 150, 1, 1, 1);
-	const matSideWing = new THREE.MeshPhongMaterial({
+	this.matSideWing = new THREE.MeshPhongMaterial({
 		color: Colors.red,
 		flatShading: true
 	});
-	const sideWing = new THREE.Mesh(geomSideWing, matSideWing);
+	const sideWing = new THREE.Mesh(geomSideWing, this.matSideWing);
 	sideWing.castShadow = true;
 	sideWing.receiveShadow = true;
 	this.mesh.add(sideWing);
@@ -252,4 +252,44 @@ AirPlane.prototype.reloadMissile = function() {
 		return true;
 	}
 	return false;
+};
+
+AirPlane.prototype.applyStyle = function(styleId) {
+	let c1, c2, c3, c4;
+	switch(styleId) {
+		case 1: // Original
+			c1 = Colors.red; c2 = Colors.white; c3 = Colors.red; c4 = Colors.red;
+			break;
+		case 2: // Argentina
+			c1 = 0x75AADB; c2 = 0xFFFFFF; c3 = 0x75AADB; c4 = 0x75AADB;
+			break;
+		case 3: // Bolivia
+			c1 = 0xDA291C; c2 = 0xF4E400; c3 = 0xDA291C; c4 = 0x007A33;
+			break;
+		case 4: // Stealth Negro
+			c1 = 0x222222; c2 = 0x111111; c3 = 0x222222; c4 = 0x111111;
+			break;
+		case 5: // Fuego
+			c1 = 0xFF4500; c2 = 0xFFD700; c3 = 0xFF0000; c4 = 0xFF8C00;
+			break;
+		case 6: // Militar
+			c1 = 0x4B5320; c2 = 0x8B4513; c3 = 0x4B5320; c4 = 0x556B2F;
+			break;
+		case 7: // Oceánico
+			c1 = 0x000080; c2 = 0x00FFFF; c3 = 0x000080; c4 = 0x00CED1;
+			break;
+		case 8: // Neón Cyberpunk
+			c1 = 0xFF00FF; c2 = 0x00FFFF; c3 = 0xFF00FF; c4 = 0x9400D3;
+			break;
+		case 9: // Dorado Imperial
+			c1 = 0xFFD700; c2 = 0xFFFFFF; c3 = 0xFFD700; c4 = 0xDAA520;
+			break;
+		default:
+			c1 = Colors.red; c2 = Colors.white; c3 = Colors.red; c4 = Colors.red;
+	}
+	
+	this.matCockpit.color.setHex(c1);
+	this.matEngine.color.setHex(c2);
+	this.matTailPlane.color.setHex(c3);
+	this.matSideWing.color.setHex(c4);
 };
