@@ -89,6 +89,26 @@ function updateEnvironmentColor() {
 		ambientLight.intensity = 0.2;
 		hemisphereLight.intensity = 0.2;
 	}
+
+	if (typeof sky !== 'undefined' && sky.sun && sky.moon) {
+		if (currentLevel === 1) {
+			sky.sun.visible = true;
+			sky.moon.visible = false;
+			sky.sun.material.color.setHex(0xffd700); // Sol amarillo
+		} else if (currentLevel === 2) {
+			sky.sun.visible = true;
+			sky.moon.visible = false;
+			sky.sun.material.color.setHex(0xff5500); // Sol naranja de atardecer
+		} else if (currentLevel === 3) {
+			sky.sun.visible = false;
+			sky.moon.visible = true;
+			if (sky.moonMat) sky.moonMat.color.setHex(0xeef4f5); // Luna brillante
+		} else if (currentLevel === 4) {
+			sky.sun.visible = false;
+			sky.moon.visible = true;
+			if (sky.moonMat) sky.moonMat.color.setHex(0x8899aa); // Luna opacada por tormenta
+		}
+	}
 }
 
 function createSea() {
@@ -107,6 +127,7 @@ function createSky() {
 	sky = new Sky();
 	sky.mesh.position.y = -3000;
 	scene.add(sky.mesh);
+	scene.add(sky.celestials);
 }
 
 function createPlane() {
@@ -261,6 +282,10 @@ function loop() {
 	forest.mesh.rotation.z += .002;
 	mountains.mesh.rotation.z += .002;
 	sky.mesh.rotation.z += .004;
+	if (sky.celestials) {
+		sky.sun.rotation.z += 0.002;
+		sky.moon.rotation.y += 0.002;
+	}
 	grass.mesh.rotation.z += .002;
 	rocks.mesh.rotation.z += .002;
 	
