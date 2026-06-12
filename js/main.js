@@ -207,8 +207,11 @@ function updatePlane() {
 
 	// Mapeo directo de la posición del ratón (-1 a 1) a las coordenadas del mundo
 	// Multiplicamos por 0.95 para dejar un ligero margen y que el avión no se corte
-	const targetY = camera.position.y + (mousePos.y * topY * 0.95);
+	let targetY = camera.position.y + (mousePos.y * topY * 0.95);
 	const targetX = (mousePos.x * rightX * 0.95);
+	
+	// Limitar para que no atraviese el suelo (El cilindro está en Y=0)
+	if (targetY < 35) targetY = 35;
 
 	// Move the plane in Y and X
 	airplane.mesh.position.y += (targetY - airplane.mesh.position.y) * 0.1;
