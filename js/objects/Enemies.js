@@ -19,6 +19,41 @@ AlienLaser.prototype.update = function() {
 	}
 };
 
+export const AlienBomb = function(x, y, z) {
+	this.mesh = new THREE.Object3D();
+	const geom = new THREE.SphereGeometry(2.5, 8, 8);
+	const mat = new THREE.MeshPhongMaterial({ color: 0x111111, flatShading: true });
+	const body = new THREE.Mesh(geom, mat);
+	this.mesh.add(body);
+	
+	// Púas de la bomba
+	const spikeGeom = new THREE.ConeGeometry(1, 3, 4);
+	const spikeMat = new THREE.MeshPhongMaterial({ color: Colors.red });
+	for (let i=0; i<6; i++) {
+		const spike = new THREE.Mesh(spikeGeom, spikeMat);
+		spike.position.y = 2.5;
+		spike.rotation.x = Math.random() * Math.PI;
+		spike.rotation.z = Math.random() * Math.PI;
+		this.mesh.add(spike);
+	}
+
+	this.mesh.position.set(x, y, z);
+	this.speedY = 0;
+	this.speedX = -1; // Cae y avanza un poco hacia la izquierda
+	this.active = true;
+};
+
+AlienBomb.prototype.update = function() {
+	this.speedY -= 0.1; // Gravedad
+	this.mesh.position.y += this.speedY;
+	this.mesh.position.x += this.speedX;
+	this.mesh.rotation.z += 0.1;
+	
+	if (this.mesh.position.y < -50 || this.mesh.position.x < -150) {
+		this.active = false;
+	}
+};
+
 export const Captive = function(type) {
 	this.mesh = new THREE.Object3D();
 	this.type = type; // 'cow' o 'human'
@@ -87,58 +122,83 @@ Captive.prototype.update = function() {
 	}
 };
 
-export const Ufo = function() {
+export const Ufo = function(type = 'basic') {
 	this.mesh = new THREE.Object3D();
 	this.active = true;
-	this.hitPoints = 3; // Resiste 3 balas
+	this.type = type;
 	
 	// Plato metálico
 	const diskGeom = new THREE.CylinderGeometry(15, 15, 4, 12);
-	const diskMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
+	let diskColor = Colors.grey;
+	if (type === 'bomber') diskColor = 0x333333;
+	const diskMat = new THREE.MeshPhongMaterial({ color: diskColor, flatShading: true });
 	const disk = new THREE.Mesh(diskGeom, diskMat);
 	
 	// Cúpula de cristal
 	const domeGeom = new THREE.SphereGeometry(8, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-	const domeMat = new THREE.MeshPhongMaterial({ color: Colors.green, transparent: true, opacity: 0.7, flatShading: true });
+	let domeColor = Colors.green;
+	if (type === 'kamikaze') domeColor = Colors.red;
+	else if (type === 'bomber') domeColor = Colors.yellow;
+	const domeMat = new THREE.MeshPhongMaterial({ color: domeColor, transparent: true, opacity: 0.7, flatShading: true });
 	const dome = new THREE.Mesh(domeGeom, domeMat);
 	dome.position.y = 2;
 	
 	this.mesh.add(disk);
 	this.mesh.add(dome);
 	
-	this.mesh.position.x = 200;
-	// Posición Y para que salgan más alto en el cielo (entre 20 y 140)
-	this.mesh.position.y = 20 + Math.random() * 120;
+	this.mesh.position.x = 200 + Math.random() * 50;
 	this.mesh.position.z = 0; // Todos en el mismo plano Z
-	
-	// Patrón de movimiento
 	this.angle = Math.random() * Math.PI * 2;
-	this.speedX = -2.5 - Math.random() * 3; // Ligeramente más veloces para mayor desafío
 	
-	// Probabilidad de llevar un cautivo (30%)
-	if (Math.random() < 0.3) {
-		this.captive = new Captive(Math.random() > 0.5 ? 'cow' : 'human');
-		this.captive.mesh.position.y = -8;
-		this.mesh.add(this.captive.mesh);
-	} else {
+	if (type === 'kamikaze') {
+		this.hitPoints = 1;
+		this.speedX = -5 - Math.random() * 4; // Muy rápidos
+		this.mesh.position.y = 20 + Math.random() * 120;
+		this.mesh.scale.set(0.6, 0.6, 0.6); // Más pequeños
+		this.captive = null; // Los kamikazes no llevan rehenes
+	} else if (type === 'bomber') {
+		this.hitPoints = 6; // Muy resistentes
+		this.speedX = -1.5 - Math.random() * 1; // Lentos
+		this.mesh.position.y = 100 + Math.random() * 100; // Vuelan alto
+		this.mesh.scale.set(1.5, 1.5, 1.5); // Más grandes
 		this.captive = null;
+	} else {
+		this.hitPoints = 3;
+		this.speedX = -2.5 - Math.random() * 3;
+		this.mesh.position.y = 20 + Math.random() * 120;
+		if (Math.random() < 0.3) {
+			this.captive = new Captive(Math.random() > 0.5 ? 'cow' : 'human');
+			this.captive.mesh.position.y = -8;
+			this.mesh.add(this.captive.mesh);
+		} else {
+			this.captive = null;
+		}
 	}
 	
 	this.lastShotTime = 0;
 };
 
-Ufo.prototype.update = function(time) {
+Ufo.prototype.update = function(time, planeY) {
 	this.mesh.position.x += this.speedX;
 	
-	// Movimiento oscilante (Hover)
-	this.angle += 0.05;
-	this.mesh.position.y += Math.sin(this.angle) * 0.5;
+	if (this.type === 'kamikaze') {
+		// Persigue la Y del avión
+		if (planeY !== undefined) {
+			if (this.mesh.position.y > planeY) this.mesh.position.y -= 1.5;
+			else if (this.mesh.position.y < planeY) this.mesh.position.y += 1.5;
+		}
+		this.mesh.rotation.z = -0.2; // Inclinados hacia adelante
+	} else {
+		// Movimiento oscilante (Hover)
+		this.angle += 0.05;
+		this.mesh.position.y += Math.sin(this.angle) * 0.5;
+	}
 	
 	// Rotación sobre sí mismo
 	this.mesh.rotation.y += 0.05;
 	
-	// Desactivar si pasa al jugador
-	if (this.mesh.position.x < -100) {
+	// Desactivar si sale de pantalla
+	if (this.mesh.position.x < -150) {
 		this.active = false;
 	}
 };
@@ -147,12 +207,17 @@ export const EnemyManager = function(scene) {
 	this.scene = scene;
 	this.ufos = [];
 	this.lasers = [];
+	this.bombs = []; // Add bombs
 	this.fallingCaptives = [];
 	this.spawnTimer = 0;
 };
 
-EnemyManager.prototype.spawnUfo = function() {
-	const ufo = new Ufo();
+EnemyManager.prototype.spawnUfo = function(level = 1) {
+	let type = 'basic';
+	if (level >= 2 && Math.random() < 0.3) type = 'kamikaze';
+	if (level >= 3 && Math.random() < 0.2) type = 'bomber';
+	
+	const ufo = new Ufo(type);
 	this.scene.add(ufo.mesh);
 	this.ufos.push(ufo);
 };
@@ -163,26 +228,42 @@ EnemyManager.prototype.shootLaser = function(ufo) {
 	this.lasers.push(laser);
 };
 
-EnemyManager.prototype.update = function(time, onShootLaser) {
+EnemyManager.prototype.dropBomb = function(ufo) {
+	const bomb = new AlienBomb(ufo.mesh.position.x, ufo.mesh.position.y - 10, ufo.mesh.position.z);
+	this.scene.add(bomb.mesh);
+	this.bombs.push(bomb);
+};
+
+EnemyManager.prototype.update = function(time, planeY, currentLevel, onShootLaser) {
 	this.spawnTimer++;
-	if (this.spawnTimer > 100) { // Un UFO cada ~1.5 segundos
+	const spawnRate = Math.max(40, 100 - (currentLevel * 10)); // Más rápido en niveles altos
+	
+	if (this.spawnTimer > spawnRate) { 
 		this.spawnTimer = 0;
 		if (Math.random() > 0.4) {
-			this.spawnUfo();
+			this.spawnUfo(currentLevel);
 		}
 	}
 	
 	// Actualizar UFOs
 	for (let i = this.ufos.length - 1; i >= 0; i--) {
 		const ufo = this.ufos[i];
-		ufo.update(time);
+		ufo.update(time, planeY);
 		
-		// Disparar Láser al azar (Más frecuente para mayor desafío)
-		if (time - ufo.lastShotTime > 1000) {
-			if (Math.random() < 0.04) {
-				this.shootLaser(ufo);
-				if (onShootLaser) onShootLaser();
-				ufo.lastShotTime = time;
+		if (ufo.type === 'basic') {
+			if (time - ufo.lastShotTime > 1000) {
+				if (Math.random() < 0.04 * currentLevel) {
+					this.shootLaser(ufo);
+					if (onShootLaser) onShootLaser();
+					ufo.lastShotTime = time;
+				}
+			}
+		} else if (ufo.type === 'bomber') {
+			if (time - ufo.lastShotTime > 2000) { // Tira bombas
+				if (Math.random() < 0.05) {
+					this.dropBomb(ufo);
+					ufo.lastShotTime = time;
+				}
 			}
 		}
 		
@@ -199,6 +280,16 @@ EnemyManager.prototype.update = function(time, onShootLaser) {
 		if (!laser.active) {
 			this.scene.remove(laser.mesh);
 			this.lasers.splice(i, 1);
+		}
+	}
+
+	// Actualizar Bombas
+	for (let i = this.bombs.length - 1; i >= 0; i--) {
+		const bomb = this.bombs[i];
+		bomb.update();
+		if (!bomb.active) {
+			this.scene.remove(bomb.mesh);
+			this.bombs.splice(i, 1);
 		}
 	}
 	

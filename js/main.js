@@ -163,9 +163,15 @@ function updateEagle() {
 }
 
 function updatePlane() {
-	// Aumentamos considerablemente los límites para que el avión se mueva por toda la pantalla
-	const targetY = normalize(mousePos.y, -.75, .75, 25, 220);
-	const targetX = normalize(mousePos.x, -.75, .75, -200, 200);
+	// Cálculo exacto del límite de la pantalla basado en la cámara (FOV 60)
+	const zDist = camera.position.z; // 280
+	const topY = zDist * 0.57735; // Math.tan(30 * Math.PI / 180)
+	const rightX = topY * (window.innerWidth / window.innerHeight);
+
+	// Mapeo directo de la posición del ratón (-1 a 1) a las coordenadas del mundo
+	// Multiplicamos por 0.95 para dejar un ligero margen y que el avión no se corte
+	const targetY = camera.position.y + (mousePos.y * topY * 0.95);
+	const targetX = (mousePos.x * rightX * 0.95);
 
 	// Move the plane in Y and X
 	airplane.mesh.position.y += (targetY - airplane.mesh.position.y) * 0.1;
@@ -319,7 +325,7 @@ function loop() {
 		}
 		
 		// Update Enemies
-		enemyManager.update(Date.now(), () => {
+		enemyManager.update(Date.now(), airplane.mesh.position.y, currentLevel, () => {
 			playAlienLaserSound();
 		});
 		
@@ -336,7 +342,48 @@ function loop() {
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (energy <= 0) {
-					// Reiniciamos sin pantalla de game over para no interrumpir
+					energy = 100;
+					score = 0;
+					HUD.updateEnergy(energy);
+					HUD.updateScore(score);
+				}
+			}
+		}
+		
+		// 1.b Kamikaze/UFOs vs Airplane
+		for (let i = enemyManager.ufos.length - 1; i >= 0; i--) {
+			const ufo = enemyManager.ufos[i];
+			if (ufo.active && ufo.mesh.position.distanceTo(planePos) < 25) {
+				ufo.active = false;
+				playExplosionSound();
+				weaponManager.spawnSmoke(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
+				
+				energy -= (ufo.type === 'kamikaze') ? 25 : 15;
+				HUD.updateEnergy(energy);
+				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
+				
+				if (energy <= 0) {
+					energy = 100;
+					score = 0;
+					HUD.updateEnergy(energy);
+					HUD.updateScore(score);
+				}
+			}
+		}
+		
+		// 1.c Bombs vs Airplane
+		for (let i = enemyManager.bombs.length - 1; i >= 0; i--) {
+			const bomb = enemyManager.bombs[i];
+			if (bomb.active && bomb.mesh.position.distanceTo(planePos) < 20) {
+				bomb.active = false;
+				playExplosionSound();
+				weaponManager.spawnSmoke(bomb.mesh.position.x, bomb.mesh.position.y, bomb.mesh.position.z);
+				
+				energy -= 30; // Las bombas hacen mucho daño
+				HUD.updateEnergy(energy);
+				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
+				
+				if (energy <= 0) {
 					energy = 100;
 					score = 0;
 					HUD.updateEnergy(energy);

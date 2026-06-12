@@ -19,7 +19,7 @@ export function createScene() {
 	);
 
 	camera.position.x = 0;
-	camera.position.z = 200;
+	camera.position.z = 280; // Alejar la cámara para ver más entorno (antes 200)
 	camera.position.y = 100;
 
 	renderer = new THREE.WebGLRenderer({

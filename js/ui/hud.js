@@ -206,13 +206,16 @@ export const HUD = {
 	updatePosition: function(aspectRatio) {
 		if (this.mesh) {
 			const zDist = 100;
-			const topY = zDist * 0.57735;
+			const topY = zDist * 0.57735; // tan(30) = 0.57735
 			const leftX = -topY * aspectRatio;
 			
-			// Ancho del panel es 65, mitad es 32.5. Para tocar el borde izquierdo:
-			const targetX = leftX + 32.5 + 2; 
-			// Alto del panel es 26, mitad es 13.
-			const targetY = topY - 13 - 2;
+			const scale = 0.6; // Reducir el tamaño del panel
+			this.mesh.scale.set(scale, scale, scale);
+			
+			// Ancho original 65, mitad 32.5. Escalado es 32.5 * scale
+			const targetX = leftX + (32.5 * scale) + 2; 
+			// Alto original 26, mitad 13. Escalado es 13 * scale
+			const targetY = topY - (13 * scale) - 2;
 			
 			this.mesh.position.set(targetX, targetY, -zDist);
 		}
@@ -223,7 +226,10 @@ export const HUD = {
 			const topY = zDist * 0.57735;
 			const rightX = topY * aspectRatio;
 			
-			this.gearMesh.position.set(rightX - 5, topY - 5, -zDist);
+			const scale = 0.6; // Reducir la tuerca también
+			this.gearMesh.scale.set(scale, scale, scale);
+			
+			this.gearMesh.position.set(rightX - (5 * scale) - 3, topY - (5 * scale) - 3, -zDist);
 			// Rotarla un poco contínuamente
 			this.gearMesh.rotation.z -= 0.01;
 		}
