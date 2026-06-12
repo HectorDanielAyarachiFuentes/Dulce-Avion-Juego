@@ -11,7 +11,7 @@ import { Eagle } from './objects/Eagle.js';
 import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
-import { initAudio, playShootSound, playMachineGunSound } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 
 let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager;
@@ -21,6 +21,7 @@ let mgTimer = 0;
 let reloadTimer = 0;
 let machineGunHeat = 0;
 let isOverheated = false;
+let gameState = 'menu';
 
 function createSea() {
 	sea = new Sea();
@@ -111,12 +112,14 @@ function updatePlane() {
 }
 
 function handleMouseMove(event) {
+	if (gameState !== 'playing') return;
 	const tx = -1 + (event.clientX / window.innerWidth) * 2;
 	const ty = 1 - (event.clientY / window.innerHeight) * 2;
 	mousePos = { x: tx, y: ty };
 }
 
 function handleMouseDown(event) {
+	if (gameState !== 'playing') return;
 	event.preventDefault();
 	initAudio();
 	
@@ -137,6 +140,7 @@ function handleMouseDown(event) {
 }
 
 function handleMouseUp(event) {
+	if (gameState !== 'playing') return;
 	if (event.button === 0) {
 		isShootingMG = false;
 	}
@@ -158,53 +162,55 @@ function loop() {
 	grass.mesh.rotation.z += .002;
 	rocks.mesh.rotation.z += .002;
 
-	airplane.pilot.updateHairs();
-	sea.moveWaves(); 
-	updatePlane();
-	updateEagle();
-	
-	if (isShootingMG && !isOverheated) {
-		mgTimer++;
-		if (mgTimer > 3) {
-			mgTimer = 0;
-			playMachineGunSound();
-			const p = airplane.mesh.position;
-			// La bala y el humo salen de la punta exacta del cañón (x=65, y=-10)
-			weaponManager.fireMachineGun(p.x + 65, p.y - 10, p.z);
-			weaponManager.spawnMuzzleSmoke(p.x + 65, p.y - 10, p.z);
+	if (gameState === 'playing') {
+		airplane.pilot.updateHairs();
+		sea.moveWaves(); 
+		updatePlane();
+		updateEagle();
+		
+		if (isShootingMG && !isOverheated) {
+			mgTimer++;
+			if (mgTimer > 3) {
+				mgTimer = 0;
+				playMachineGunSound();
+				const p = airplane.mesh.position;
+				// La bala y el humo salen de la punta exacta del cañón (x=65, y=-10)
+				weaponManager.fireMachineGun(p.x + 65, p.y - 10, p.z);
+				weaponManager.spawnMuzzleSmoke(p.x + 65, p.y - 10, p.z);
+			}
+			
+			machineGunHeat += 1.5;
+			if (machineGunHeat >= 100) {
+				machineGunHeat = 100;
+				isOverheated = true;
+				isShootingMG = false; // Fuerza detener el disparo
+			}
+		} else {
+			machineGunHeat -= 0.5;
+			if (machineGunHeat <= 0) {
+				machineGunHeat = 0;
+				isOverheated = false;
+			}
 		}
 		
-		machineGunHeat += 1.5;
-		if (machineGunHeat >= 100) {
-			machineGunHeat = 100;
-			isOverheated = true;
-			isShootingMG = false; // Fuerza detener el disparo
-		}
-	} else {
-		machineGunHeat -= 0.5;
-		if (machineGunHeat <= 0) {
-			machineGunHeat = 0;
-			isOverheated = false;
-		}
-	}
-	
-	HUD.updateHeat(machineGunHeat, isOverheated);
-	
-	// Auto-reload system
-	if (airplane.ammo < 8) {
-		reloadTimer++;
-		if (reloadTimer > 180) { // Approx 3 seconds to reload 1 missile
-			airplane.reloadMissile();
-			HUD.updateAmmo(airplane.ammo);
+		HUD.updateHeat(machineGunHeat, isOverheated);
+		
+		// Auto-reload system
+		if (airplane.ammo < 8) {
+			reloadTimer++;
+			if (reloadTimer > 180) { // Approx 3 seconds to reload 1 missile
+				airplane.reloadMissile();
+				HUD.updateAmmo(airplane.ammo);
+				reloadTimer = 0;
+			}
+		} else {
 			reloadTimer = 0;
 		}
-	} else {
-		reloadTimer = 0;
+		
+		// Update Weapons and HUD
+		weaponManager.update();
+		HUD.updatePosition(camera.aspect);
 	}
-	
-	// Update Weapons and HUD
-	weaponManager.update();
-	HUD.updatePosition(camera.aspect);
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
@@ -227,6 +233,15 @@ function init() {
 	
 	weaponManager = new WeaponManager(scene);
 	HUD.init(camera);
+	
+	// Botón de Inicio
+	const startBtn = document.getElementById('start-btn');
+	const welcomeScreen = document.getElementById('welcome-screen');
+	startBtn.addEventListener('click', () => {
+		welcomeScreen.classList.add('hidden');
+		gameState = 'playing';
+		playEpicSong();
+	});
 
 	document.addEventListener('mousemove', handleMouseMove, false);
 	document.addEventListener('mousedown', handleMouseDown, false);
