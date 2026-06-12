@@ -13,14 +13,16 @@ let masterSfxGain;
 export function setMusicMuted(muted) {
 	isMusicMuted = muted;
 	if (masterMusicGain) {
-		masterMusicGain.gain.setValueAtTime(muted ? 0 : 0.6, audioCtx.currentTime);
+		masterMusicGain.gain.cancelScheduledValues(audioCtx ? audioCtx.currentTime : 0);
+		masterMusicGain.gain.value = muted ? 0 : 0.6;
 	}
 }
 
 export function setSfxMuted(muted) {
 	isSfxMuted = muted;
 	if (masterSfxGain) {
-		masterSfxGain.gain.setValueAtTime(muted ? 0 : 1.0, audioCtx.currentTime);
+		masterSfxGain.gain.cancelScheduledValues(audioCtx ? audioCtx.currentTime : 0);
+		masterSfxGain.gain.value = muted ? 0 : 1.0;
 	}
 }
 

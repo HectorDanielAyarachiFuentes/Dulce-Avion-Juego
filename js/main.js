@@ -526,6 +526,7 @@ function init() {
 	const closeSettingsBtn = document.getElementById('close-settings-btn');
 	const muteMusicChk = document.getElementById('mute-music-chk');
 	const muteSfxChk = document.getElementById('mute-sfx-chk');
+	const fullscreenBtn = document.getElementById('fullscreen-btn');
 	const trackSelect = document.getElementById('track-select');
 	const planeColorSelect = document.getElementById('plane-color-select');
 	
@@ -554,6 +555,30 @@ function init() {
 	muteSfxChk.addEventListener('change', (e) => {
 		setSfxMuted(e.target.checked);
 	});
+	
+	if (fullscreenBtn) {
+		fullscreenBtn.addEventListener('click', () => {
+			if (!document.fullscreenElement) {
+				document.documentElement.requestFullscreen().catch(err => {
+					console.log(`Error al intentar activar pantalla completa: ${err.message}`);
+				});
+				fullscreenBtn.innerText = "Desactivar";
+			} else {
+				if (document.exitFullscreen) {
+					document.exitFullscreen();
+					fullscreenBtn.innerText = "Activar";
+				}
+			}
+		});
+		
+		document.addEventListener('fullscreenchange', () => {
+			if (!document.fullscreenElement) {
+				fullscreenBtn.innerText = "Activar";
+			} else {
+				fullscreenBtn.innerText = "Desactivar";
+			}
+		});
+	}
 	
 	trackSelect.addEventListener('change', (e) => {
 		setSongId(parseInt(e.target.value));

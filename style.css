@@ -184,6 +184,22 @@ body.playing {
 	accent-color: #f25346;
 }
 
+.toggle-btn {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 6px;
+	padding: 8px 15px;
+	color: white;
+	cursor: pointer;
+	font-size: 16px;
+	margin-left: 20px;
+	transition: background 0.2s;
+}
+
+.toggle-btn:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
 #close-settings-btn {
 	background: linear-gradient(135deg, #f25346 0%, #e13c2f 100%);
 	border: none;
