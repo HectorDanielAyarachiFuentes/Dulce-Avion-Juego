@@ -26,6 +26,26 @@ SmokeParticle.prototype.update = function() {
 	this.mesh.rotation.z += 0.05;
 };
 
+export const ContrailParticle = function(x, y, z) {
+	this.mesh = new THREE.Mesh(
+		new THREE.BoxGeometry(0.8, 0.8, 0.8), // Más pequeño
+		new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 }) // Más transparente
+	);
+	this.mesh.position.set(x, y, z);
+	this.mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+	this.scale = 1;
+	this.life = 1.0;
+};
+
+ContrailParticle.prototype.update = function() {
+	this.scale += 0.02; // Se expande muy sutilmente
+	this.mesh.scale.set(this.scale, this.scale, this.scale);
+	this.life -= 0.06; // Se desvanece un poco más rápido
+	this.mesh.material.opacity = this.life;
+	this.mesh.position.x -= 4; // Viento hacia atrás rápido
+	this.mesh.position.y += (Math.random() - 0.5) * 0.2; // Turbulencia más suave
+};
+
 export const MuzzleSmokeParticle = function(x, y, z) {
 	this.mesh = new THREE.Mesh(
 		new THREE.BoxGeometry(1.5, 1.5, 1.5),
@@ -163,6 +183,12 @@ export const WeaponManager = function(scene) {
 	
 	this.spawnMuzzleSmoke = function(x, y, z) {
 		const s = new MuzzleSmokeParticle(x, y, z);
+		this.scene.add(s.mesh);
+		this.particles.push(s);
+	};
+	
+	this.spawnContrail = function(x, y, z) {
+		const s = new ContrailParticle(x, y, z);
 		this.scene.add(s.mesh);
 		this.particles.push(s);
 	};

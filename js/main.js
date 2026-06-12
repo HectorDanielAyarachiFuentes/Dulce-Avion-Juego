@@ -214,13 +214,16 @@ function updatePlane() {
 	if (targetY < 35) targetY = 35;
 
 	// Move the plane in Y and X
-	airplane.mesh.position.y += (targetY - airplane.mesh.position.y) * 0.1;
-	airplane.mesh.position.x += (targetX - airplane.mesh.position.x) * 0.1;
+	const diffY = targetY - airplane.mesh.position.y;
+	const diffX = targetX - airplane.mesh.position.x;
+	
+	airplane.mesh.position.y += diffY * 0.1;
+	airplane.mesh.position.x += diffX * 0.1;
 
 	// Efecto de giro más "plano" (suave)
-	airplane.mesh.rotation.z = (targetY - airplane.mesh.position.y) * 0.005; 
-	airplane.mesh.rotation.x = (airplane.mesh.position.y - targetY) * 0.002;
-	airplane.mesh.rotation.y = (targetX - airplane.mesh.position.x) * -0.005;
+	airplane.mesh.rotation.z = diffY * 0.005; 
+	airplane.mesh.rotation.x = -diffY * 0.002;
+	airplane.mesh.rotation.y = -diffX * 0.005;
 
 	airplane.propeller.rotation.x += 0.3;
 	
@@ -233,6 +236,13 @@ function updatePlane() {
 				weaponManager.spawnSpark(p.x - 20, p.y + 10, p.z); // Chispas si está crítico
 			}
 		}
+	}
+	
+	// Estelas de condensación (Contrails) desde las alas SOLO en maniobras verticales bruscas
+	if (Math.abs(diffY) > 15 && Math.random() > 0.2) {
+		const p = airplane.mesh.position;
+		weaponManager.spawnContrail(p.x - 5, p.y + 2, p.z + 18); // Ala derecha
+		weaponManager.spawnContrail(p.x - 5, p.y + 2, p.z - 18); // Ala izquierda
 	}
 }
 
