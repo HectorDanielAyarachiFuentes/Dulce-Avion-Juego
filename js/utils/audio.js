@@ -117,9 +117,14 @@ export function playEpicSong() {
 		[98.00, 196.00, 146.83]   // G
 	];
 	
-	function scheduleMeasure(startTime, chordIndex) {
+	function scheduleMeasure(startTime, measureIndex) {
+		const chordIndex = measureIndex % 4;
 		const chord = chords[chordIndex];
 		const rootFreq = chord[0];
+		
+		const isIntro = measureIndex < 8;
+		const isDev = measureIndex >= 8 && measureIndex < 16;
+		const isEpic = measureIndex >= 16;
 		
 		// 1. Línea de Bajo Conductor (Semicorcheas oscilantes)
 		for (let i = 0; i < 16; i++) {
@@ -132,12 +137,12 @@ export function playEpicSong() {
 			osc.frequency.value = rootFreq;
 			
 			filter.type = 'lowpass';
-			filter.frequency.setValueAtTime(150, time);
-			filter.frequency.exponentialRampToValueAtTime(800, time + 0.03);
-			filter.frequency.exponentialRampToValueAtTime(150, time + (beatDuration/4) - 0.01);
+			filter.frequency.setValueAtTime(isEpic ? 300 : 150, time); // Más brillante en la parte épica
+			filter.frequency.exponentialRampToValueAtTime(isEpic ? 1200 : 800, time + 0.03);
+			filter.frequency.exponentialRampToValueAtTime(isEpic ? 300 : 150, time + (beatDuration/4) - 0.01);
 			
 			gain.gain.setValueAtTime(0, time);
-			gain.gain.linearRampToValueAtTime(0.25, time + 0.02); // Ataque rápido
+			gain.gain.linearRampToValueAtTime(isEpic ? 0.4 : 0.25, time + 0.02); // Más volumen en epic
 			gain.gain.exponentialRampToValueAtTime(0.01, time + (beatDuration/4) - 0.01);
 			
 			osc.connect(filter);
@@ -148,9 +153,11 @@ export function playEpicSong() {
 			osc.stop(time + (beatDuration/4));
 		}
 		
-		// 2. Melodía Heroica / Arpegios (Corcheas)
-		for (let i = 0; i < 8; i++) {
-			const time = startTime + i * (beatDuration / 2);
+		// 2. Melodía Heroica / Arpegios
+		const arpeggioNotes = isIntro ? 8 : 16; // Corcheas en intro, semicorcheas después
+		const arpDuration = beatDuration * 4 / arpeggioNotes;
+		for (let i = 0; i < arpeggioNotes; i++) {
+			const time = startTime + i * arpDuration;
 			const noteFreq = chord[i % 3] * 2; // Una octava más alta
 			
 			const osc = audioCtx.createOscillator();
@@ -161,13 +168,77 @@ export function playEpicSong() {
 			
 			gain.gain.setValueAtTime(0, time);
 			gain.gain.linearRampToValueAtTime(0.1, time + 0.05);
-			gain.gain.exponentialRampToValueAtTime(0.01, time + (beatDuration/2) - 0.01);
+			gain.gain.exponentialRampToValueAtTime(0.01, time + arpDuration - 0.01);
 			
 			osc.connect(gain);
 			gain.connect(audioCtx.destination);
 			
 			osc.start(time);
-			osc.stop(time + (beatDuration/2));
+			osc.stop(time + arpDuration);
+		}
+		
+		// 3. Batería (Desarrollo y Clímax)
+		if (isDev || isEpic) {
+			// Bombo (Kick) pesado en cada negra
+			for (let i = 0; i < 4; i++) {
+				const time = startTime + i * beatDuration;
+				const osc = audioCtx.createOscillator();
+				const gain = audioCtx.createGain();
+				osc.frequency.setValueAtTime(150, time);
+				osc.frequency.exponentialRampToValueAtTime(30, time + 0.1);
+				gain.gain.setValueAtTime(0.8, time);
+				gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+				osc.connect(gain);
+				gain.connect(audioCtx.destination);
+				osc.start(time);
+				osc.stop(time + 0.1);
+			}
+		}
+		
+		// 4. Éxtasis Épico: Sub-Bajo y Hi-Hats furiosos
+		if (isEpic) {
+			// Sub-Bajo profundo continuo
+			const subOsc = audioCtx.createOscillator();
+			subOsc.type = 'square';
+			subOsc.frequency.value = rootFreq / 2; // Octava destructiva
+			const subGain = audioCtx.createGain();
+			const subFilter = audioCtx.createBiquadFilter();
+			subFilter.type = 'lowpass';
+			subFilter.frequency.value = 150; // Quitar agudos para que retumbe
+			
+			subGain.gain.setValueAtTime(0.3, startTime);
+			subGain.gain.linearRampToValueAtTime(0.3, startTime + beatDuration * 3.8);
+			subGain.gain.linearRampToValueAtTime(0, startTime + beatDuration * 4);
+			
+			subOsc.connect(subFilter);
+			subFilter.connect(subGain);
+			subGain.connect(audioCtx.destination);
+			
+			subOsc.start(startTime);
+			subOsc.stop(startTime + beatDuration * 4);
+			
+			// Hi-Hats de ruido blanco en semicorcheas
+			for (let i = 0; i < 16; i++) {
+				const time = startTime + i * (beatDuration / 4);
+				// Acentuar el contratiempo (el 'and' de cada pulso)
+				const isAccent = (i % 2 !== 0);
+				
+				const noise = audioCtx.createBufferSource();
+				noise.buffer = getNoiseBuffer();
+				const nFilter = audioCtx.createBiquadFilter();
+				nFilter.type = 'highpass';
+				nFilter.frequency.value = 5000;
+				const nGain = audioCtx.createGain();
+				nGain.gain.setValueAtTime(isAccent ? 0.15 : 0.05, time);
+				nGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+				
+				noise.connect(nFilter);
+				nFilter.connect(nGain);
+				nGain.connect(audioCtx.destination);
+				
+				noise.start(time);
+				noise.stop(time + 0.05);
+			}
 		}
 	}
 	
@@ -177,9 +248,13 @@ export function playEpicSong() {
 	function scheduler() {
 		// Programar el siguiente compás si se acerca el tiempo
 		while (nextScheduleTime < audioCtx.currentTime + 0.5) {
-			scheduleMeasure(nextScheduleTime, currentMeasure % 4);
+			scheduleMeasure(nextScheduleTime, currentMeasure);
 			nextScheduleTime += beatDuration * 4; // 4 tiempos por compás
 			currentMeasure++;
+			// Bucle infinito: después del compás 31, regresamos al desarrollo (compás 8) para mantener la intensidad
+			if (currentMeasure >= 32) {
+				currentMeasure = 8;
+			}
 		}
 		setTimeout(scheduler, 100);
 	}
