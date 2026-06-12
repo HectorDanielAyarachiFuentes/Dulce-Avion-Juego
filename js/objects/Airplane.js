@@ -1,0 +1,183 @@
+import { Colors } from '../utils/colors.js';
+
+export const Pilot = function () {
+	this.mesh = new THREE.Object3D();
+	this.mesh.name = "pilot";
+
+	this.angleHairs = 0;
+
+	const bodyGeom = new THREE.BoxGeometry(15, 15, 15);
+	const bodyMat = new THREE.MeshPhongMaterial({
+		color: Colors.brown,
+		flatShading: true
+	});
+	const body = new THREE.Mesh(bodyGeom, bodyMat);
+	body.position.set(2, -12, 0);
+	this.mesh.add(body);
+
+	const faceGeom = new THREE.BoxGeometry(10, 10, 10);
+	const faceMat = new THREE.MeshLambertMaterial({
+		color: Colors.pink
+	});
+	const face = new THREE.Mesh(faceGeom, faceMat);
+	this.mesh.add(face);
+
+	const hairGeom = new THREE.BoxGeometry(4, 4, 4);
+	const hairMat = new THREE.MeshLambertMaterial({
+		color: Colors.brown
+	});
+	const hair = new THREE.Mesh(hairGeom, hairMat);
+	hair.geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 2, 0));
+
+	const hairs = new THREE.Object3D();
+	this.hairsTop = new THREE.Object3D();
+
+	for (let i = 0; i < 12; i++) {
+		const h = hair.clone();
+		const col = i % 3;
+		const row = Math.floor(i / 3);
+		const startPosZ = -4;
+		const startPosX = -4;
+		h.position.set(startPosX + row * 4, 0, startPosZ + col * 4);
+		this.hairsTop.add(h);
+	}
+	hairs.add(this.hairsTop);
+
+	const hairSideGeom = new THREE.BoxGeometry(12, 4, 2);
+	hairSideGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(-6, 0, 0));
+	const hairSideR = new THREE.Mesh(hairSideGeom, hairMat);
+	const hairSideL = hairSideR.clone();
+	hairSideR.position.set(8, -2, 6);
+	hairSideL.position.set(8, -2, -6);
+	hairs.add(hairSideR);
+	hairs.add(hairSideL);
+
+	const hairBackGeom = new THREE.BoxGeometry(2, 8, 10);
+	const hairBack = new THREE.Mesh(hairBackGeom, hairMat);
+	hairBack.position.set(-1, -4, 0);
+	hairs.add(hairBack);
+	hairs.position.set(-5, 5, 0);
+
+	this.mesh.add(hairs);
+
+	const glassGeom = new THREE.BoxGeometry(5, 5, 5);
+	const glassMat = new THREE.MeshLambertMaterial({
+		color: Colors.brown
+	});
+	const glassR = new THREE.Mesh(glassGeom, glassMat);
+	glassR.position.set(6, 0, 3);
+	const glassL = glassR.clone();
+	glassL.position.z = -glassR.position.z;
+
+	const glassAGeom = new THREE.BoxGeometry(11, 1, 11);
+	const glassA = new THREE.Mesh(glassAGeom, glassMat);
+	this.mesh.add(glassR);
+	this.mesh.add(glassL);
+	this.mesh.add(glassA);
+
+	const earGeom = new THREE.BoxGeometry(2, 3, 2);
+	const earL = new THREE.Mesh(earGeom, faceMat);
+	earL.position.set(0, 0, -6);
+	const earR = earL.clone();
+	earR.position.set(0, 0, 6);
+	this.mesh.add(earL);
+	this.mesh.add(earR);
+};
+
+Pilot.prototype.updateHairs = function () {
+	const hairs = this.hairsTop.children;
+	const l = hairs.length;
+	for (let i = 0; i < l; i++) {
+		const h = hairs[i];
+		h.scale.y = .75 + Math.cos(this.angleHairs + i / 3) * .25;
+	}
+	this.angleHairs += 0.16;
+};
+
+export const AirPlane = function () {
+	this.mesh = new THREE.Object3D();
+
+	const geomCockpit = new THREE.BoxGeometry(80, 50, 50, 1, 1, 1);
+	const matCockpit = new THREE.MeshPhongMaterial({
+		color: Colors.red,
+		flatShading: true
+	});
+
+	const pos = geomCockpit.attributes.position;
+	for (let i = 0; i < pos.count; i++) {
+		let x = pos.getX(i);
+		let y = pos.getY(i);
+		let z = pos.getZ(i);
+        
+		if (x < 0 && y > 0 && z > 0) { y -= 10; z += 20; }
+		else if (x < 0 && y > 0 && z < 0) { y -= 10; z -= 20; }
+		else if (x < 0 && y < 0 && z > 0) { y += 30; z += 20; }
+		else if (x < 0 && y < 0 && z < 0) { y += 30; z -= 20; }
+		
+		pos.setXYZ(i, x, y, z);
+	}
+
+	const cockpit = new THREE.Mesh(geomCockpit, matCockpit);
+	cockpit.castShadow = true;
+	cockpit.receiveShadow = true;
+	this.mesh.add(cockpit);
+
+	const geomEngine = new THREE.BoxGeometry(20, 50, 50, 1, 1, 1);
+	const matEngine = new THREE.MeshPhongMaterial({
+		color: Colors.white,
+		flatShading: true
+	});
+	const engine = new THREE.Mesh(geomEngine, matEngine);
+	engine.position.x = 40;
+	engine.castShadow = true;
+	engine.receiveShadow = true;
+	this.mesh.add(engine);
+
+	const geomTailPlane = new THREE.BoxGeometry(15, 20, 5, 1, 1, 1);
+	const matTailPlane = new THREE.MeshPhongMaterial({
+		color: Colors.red,
+		flatShading: true
+	});
+	const tailPlane = new THREE.Mesh(geomTailPlane, matTailPlane);
+	tailPlane.position.set(-35, 25, 0);
+	tailPlane.castShadow = true;
+	tailPlane.receiveShadow = true;
+	this.mesh.add(tailPlane);
+
+	const geomSideWing = new THREE.BoxGeometry(40, 8, 150, 1, 1, 1);
+	const matSideWing = new THREE.MeshPhongMaterial({
+		color: Colors.red,
+		flatShading: true
+	});
+	const sideWing = new THREE.Mesh(geomSideWing, matSideWing);
+	sideWing.castShadow = true;
+	sideWing.receiveShadow = true;
+	this.mesh.add(sideWing);
+
+	const geomPropeller = new THREE.BoxGeometry(20, 10, 10, 1, 1, 1);
+	const matPropeller = new THREE.MeshPhongMaterial({
+		color: Colors.brown,
+		flatShading: true
+	});
+	this.propeller = new THREE.Mesh(geomPropeller, matPropeller);
+	this.propeller.castShadow = true;
+	this.propeller.receiveShadow = true;
+
+	const geomBlade = new THREE.BoxGeometry(1, 100, 20, 1, 1, 1);
+	const matBlade = new THREE.MeshPhongMaterial({
+		color: Colors.brownDark,
+		flatShading: true
+	});
+
+	const blade = new THREE.Mesh(geomBlade, matBlade);
+	blade.position.set(8, 0, 0);
+	blade.castShadow = true;
+	blade.receiveShadow = true;
+	this.propeller.add(blade);
+	this.propeller.position.set(50, 0, 0);
+	this.mesh.add(this.propeller);
+
+	this.pilot = new Pilot();
+	this.pilot.mesh.position.set(-10, 27, 0);
+	this.mesh.add(this.pilot.mesh);
+};
