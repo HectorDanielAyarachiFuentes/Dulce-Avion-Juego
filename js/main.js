@@ -169,7 +169,9 @@ function loop() {
 			mgTimer = 0;
 			playMachineGunSound();
 			const p = airplane.mesh.position;
-			weaponManager.fireMachineGun(p.x + 55, p.y - 10, p.z);
+			// La bala y el humo salen de la punta exacta del cañón (x=65, y=-10)
+			weaponManager.fireMachineGun(p.x + 65, p.y - 10, p.z);
+			weaponManager.spawnMuzzleSmoke(p.x + 65, p.y - 10, p.z);
 		}
 		
 		machineGunHeat += 1.5;

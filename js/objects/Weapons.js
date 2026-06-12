@@ -26,6 +26,31 @@ SmokeParticle.prototype.update = function() {
 	this.mesh.rotation.z += 0.05;
 };
 
+export const MuzzleSmokeParticle = function(x, y, z) {
+	this.mesh = new THREE.Mesh(
+		new THREE.BoxGeometry(1.5, 1.5, 1.5),
+		new THREE.MeshBasicMaterial({ color: Colors.grey, transparent: true, opacity: 0.5 })
+	);
+	this.mesh.position.set(
+		x + (Math.random() - 0.5) * 2,
+		y + (Math.random() - 0.5) * 2,
+		z + (Math.random() - 0.5) * 2
+	);
+	this.mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+	this.scale = 1;
+	this.life = 1.0;
+};
+
+MuzzleSmokeParticle.prototype.update = function() {
+	this.scale += 0.15; // Grow slightly
+	this.mesh.scale.set(this.scale, this.scale, this.scale);
+	this.life -= 0.08; // Fade out fast
+	this.mesh.material.opacity = this.life;
+	this.mesh.position.x -= 3; // Drift backwards with the wind
+	this.mesh.position.y += 0.2; // Drift upwards slightly
+	this.mesh.rotation.z += 0.05;
+};
+
 export const SparkParticle = function(x, y, z) {
 	this.mesh = new THREE.Mesh(
 		new THREE.BoxGeometry(1.5, 1.5, 1.5),
@@ -130,6 +155,12 @@ export const WeaponManager = function(scene) {
 	
 	this.spawnSpark = function(x, y, z) {
 		const s = new SparkParticle(x, y, z);
+		this.scene.add(s.mesh);
+		this.particles.push(s);
+	};
+	
+	this.spawnMuzzleSmoke = function(x, y, z) {
+		const s = new MuzzleSmokeParticle(x, y, z);
 		this.scene.add(s.mesh);
 		this.particles.push(s);
 	};
