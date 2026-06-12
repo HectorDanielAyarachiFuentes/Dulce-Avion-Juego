@@ -197,3 +197,24 @@ body.playing {
 	text-shadow: 2px 2px 0px #23190f;
 	letter-spacing: 3px;
 }
+
+/* LEVEL SELECTOR */
+.level-select-container {
+	margin: 0 0 30px 0;
+	font-size: 20px;
+	color: #d8d0d1;
+	transform: translateZ(45px); /* Relieve 3D junto con los textos */
+}
+
+.level-select-container select {
+	padding: 5px;
+	font-size: 18px;
+	background: #23190f;
+	color: white;
+	border: 2px solid #d8d0d1;
+	border-radius: 4px;
+	outline: none;
+	margin-left: 10px;
+	font-family: 'Terminal', sans-serif;
+	cursor: pointer;
+}

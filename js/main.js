@@ -12,10 +12,11 @@ import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
 import { EnemyManager } from './objects/Enemies.js';
-import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
+import { Rain } from './objects/Rain.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain;
 let mousePos = { x: 0, y: 0 };
 let isShootingMG = false;
 let mgTimer = 0;
@@ -109,6 +110,14 @@ function updateEnvironmentColor() {
 			if (sky.moonMat) sky.moonMat.color.setHex(0x8899aa); // Luna opacada por tormenta
 		}
 	}
+	
+	if (currentLevel === 4) {
+		if (rain) rain.mesh.visible = true;
+		startRainSound();
+	} else {
+		if (rain) rain.mesh.visible = false;
+		stopRainSound();
+	}
 }
 
 function createSea() {
@@ -166,6 +175,11 @@ function createEagle() {
 	eagle.mesh.scale.set(0.3, 0.3, 0.3);
 	eagle.mesh.position.set(100, 150, -300);
 	scene.add(eagle.mesh);
+}
+
+function createRain() {
+	rain = new Rain();
+	scene.add(rain.mesh);
 }
 
 function updateEagle() {
@@ -273,6 +287,20 @@ function handleContextMenu(event) {
 	event.preventDefault();
 }
 
+function resetGame() {
+	energy = 100;
+	const startSelect = document.getElementById('start-level-select');
+	const selectedLevel = startSelect ? parseInt(startSelect.value) : 1;
+	if (selectedLevel === 1) score = 0;
+	if (selectedLevel === 2) score = 1500;
+	if (selectedLevel === 3) score = 3500;
+	if (selectedLevel === 4) score = 7000;
+	currentLevel = selectedLevel;
+	updateEnvironmentColor();
+	HUD.updateEnergy(energy);
+	HUD.updateScore(score);
+}
+
 function loop() {
 	airplane.propeller.rotation.x += 0.3;
 
@@ -296,6 +324,7 @@ function loop() {
 			ambientLight.intensity = 3.0;
 			scene.fog.color.setHex(0xffffff);
 			document.querySelector('.aviator').style.background = 'linear-gradient(#ffffff, #aaaaaa)';
+			if (Math.random() < 0.1) playThunderSound();
 		} else {
 			// Volver rápido a la oscuridad
 			ambientLight.intensity += (0.2 - ambientLight.intensity) * 0.1;
@@ -307,6 +336,7 @@ function loop() {
 	if (gameState === 'playing') {
 		airplane.pilot.updateHairs();
 		sea.moveWaves(); 
+		if (rain) rain.update();
 		updatePlane();
 		updateEagle();
 		
@@ -367,10 +397,7 @@ function loop() {
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (energy <= 0) {
-					energy = 100;
-					score = 0;
-					HUD.updateEnergy(energy);
-					HUD.updateScore(score);
+					resetGame();
 				}
 			}
 		}
@@ -388,10 +415,7 @@ function loop() {
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (energy <= 0) {
-					energy = 100;
-					score = 0;
-					HUD.updateEnergy(energy);
-					HUD.updateScore(score);
+					resetGame();
 				}
 			}
 		}
@@ -409,10 +433,7 @@ function loop() {
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (energy <= 0) {
-					energy = 100;
-					score = 0;
-					HUD.updateEnergy(energy);
-					HUD.updateScore(score);
+					resetGame();
 				}
 			}
 		}
@@ -477,6 +498,7 @@ function init() {
 	createEagle();
 	createGrass();
 	createRocks();
+	createRain();
 	
 	weaponManager = new WeaponManager(scene);
 	enemyManager = new EnemyManager(scene);
@@ -499,6 +521,7 @@ function init() {
 		welcomeScreen.classList.add('hidden');
 		gameState = 'playing';
 		document.body.classList.add('playing');
+		resetGame();
 		playEpicSong(); // Esto iniciará el loop procedural
 	});
 	

@@ -488,3 +488,82 @@ export function playEpicSong() {
 	
 	scheduler();
 }
+
+export function playThunderSound() {
+	if (!audioCtx || isSfxMuted) return;
+	const now = audioCtx.currentTime;
+	
+	const noise = audioCtx.createBufferSource();
+	noise.buffer = getNoiseBuffer();
+	const noiseFilter = audioCtx.createBiquadFilter();
+	noiseFilter.type = 'lowpass';
+	noiseFilter.frequency.setValueAtTime(800, now);
+	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 1.5);
+	
+	const gain = audioCtx.createGain();
+	gain.gain.setValueAtTime(1.0, now);
+	gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+	
+	noise.connect(noiseFilter);
+	noiseFilter.connect(gain);
+	gain.connect(masterSfxGain);
+	
+	// Rumble osc
+	const osc = audioCtx.createOscillator();
+	osc.type = 'square';
+	osc.frequency.setValueAtTime(40, now);
+	osc.frequency.exponentialRampToValueAtTime(10, now + 1.5);
+	const oscGain = audioCtx.createGain();
+	oscGain.gain.setValueAtTime(0.8, now);
+	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+	osc.connect(oscGain);
+	oscGain.connect(masterSfxGain);
+	
+	noise.start(now);
+	noise.stop(now + 1.5);
+	osc.start(now);
+	osc.stop(now + 1.5);
+}
+
+let rainNoiseNode = null;
+let rainGainNode = null;
+
+export function startRainSound() {
+	if (!audioCtx) initAudio();
+	if (rainNoiseNode) return; // Already playing
+	if (isSfxMuted && masterSfxGain.gain.value === 0) {
+		// Even if muted, we start the node so it plays when unmuted
+	}
+	
+	const now = audioCtx.currentTime;
+	rainNoiseNode = audioCtx.createBufferSource();
+	rainNoiseNode.buffer = getNoiseBuffer();
+	rainNoiseNode.loop = true;
+	
+	const noiseFilter = audioCtx.createBiquadFilter();
+	noiseFilter.type = 'lowpass';
+	noiseFilter.frequency.value = 800; // Sonido de lluvia constante
+	
+	rainGainNode = audioCtx.createGain();
+	rainGainNode.gain.setValueAtTime(0, now);
+	rainGainNode.gain.linearRampToValueAtTime(0.3, now + 2); // Fade in suave
+	
+	rainNoiseNode.connect(noiseFilter);
+	noiseFilter.connect(rainGainNode);
+	rainGainNode.connect(masterSfxGain);
+	
+	rainNoiseNode.start(now);
+}
+
+export function stopRainSound() {
+	if (!rainNoiseNode) return;
+	const now = audioCtx.currentTime;
+	if (rainGainNode) {
+		rainGainNode.gain.linearRampToValueAtTime(0, now + 1); // Fade out suave
+	}
+	rainNoiseNode.stop(now + 1);
+	setTimeout(() => {
+		rainNoiseNode = null;
+		rainGainNode = null;
+	}, 1000);
+}
