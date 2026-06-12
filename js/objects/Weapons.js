@@ -1,5 +1,31 @@
 import { Colors } from '../utils/colors.js';
 
+export const SmokeParticle = function(x, y, z) {
+	this.mesh = new THREE.Mesh(
+		new THREE.BoxGeometry(3, 3, 3),
+		new THREE.MeshBasicMaterial({ color: Colors.grey, transparent: true, opacity: 0.6 })
+	);
+	// Spawn with a slight random offset
+	this.mesh.position.set(
+		x + (Math.random() - 0.5) * 4,
+		y + (Math.random() - 0.5) * 4,
+		z + (Math.random() - 0.5) * 4
+	);
+	this.mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+	this.scale = 1;
+	this.life = 1.0;
+};
+
+SmokeParticle.prototype.update = function() {
+	this.scale += 0.3; // Grow larger
+	this.mesh.scale.set(this.scale, this.scale, this.scale);
+	this.life -= 0.03; // Fade out
+	this.mesh.material.opacity = this.life;
+	this.mesh.position.x -= 2; // Drift backwards
+	this.mesh.position.y += 0.5; // Drift upwards slightly
+	this.mesh.rotation.z += 0.05;
+};
+
 export const MissileProjectile = function(x, y, z) {
 	this.mesh = new THREE.Object3D();
 	
@@ -60,6 +86,7 @@ MachineGunProjectile.prototype.update = function() {
 export const WeaponManager = function(scene) {
 	this.scene = scene;
 	this.projectiles = [];
+	this.particles = [];
 	
 	this.fireMissile = function(x, y, z) {
 		const p = new MissileProjectile(x, y, z);
@@ -73,15 +100,41 @@ export const WeaponManager = function(scene) {
 		this.projectiles.push(p);
 	};
 	
+	this.spawnSmoke = function(x, y, z) {
+		const s = new SmokeParticle(x, y, z);
+		this.scene.add(s.mesh);
+		this.particles.push(s);
+	};
+	
 	this.update = function() {
+		// Update Projectiles
 		for(let i=this.projectiles.length-1; i>=0; i--) {
 			const p = this.projectiles[i];
 			p.update(); // Cada proyectil maneja su propio avance
+			
+			// Si es un misil, soltar humo
+			if (p instanceof MissileProjectile) {
+				// Soltar partículas de humo detrás del misil
+				if (Math.random() > 0.2) {
+					this.spawnSmoke(p.mesh.position.x - 15, p.mesh.position.y, p.mesh.position.z);
+				}
+			}
 			
 			// Remove if it goes too far
 			if (p.mesh.position.x > 1500) {
 				this.scene.remove(p.mesh);
 				this.projectiles.splice(i, 1);
+			}
+		}
+
+		// Update Smoke Particles
+		for(let i=this.particles.length-1; i>=0; i--) {
+			const s = this.particles[i];
+			s.update();
+			
+			if (s.life <= 0) {
+				this.scene.remove(s.mesh);
+				this.particles.splice(i, 1);
 			}
 		}
 	};

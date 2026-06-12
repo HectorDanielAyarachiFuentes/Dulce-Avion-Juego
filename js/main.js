@@ -200,7 +200,9 @@ function loop() {
 		reloadTimer = 0;
 	}
 	
+	// Update Weapons and HUD
 	weaponManager.update();
+	HUD.updatePosition(camera.aspect);
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
