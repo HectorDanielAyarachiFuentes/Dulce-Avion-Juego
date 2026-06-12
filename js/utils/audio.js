@@ -493,36 +493,62 @@ export function playThunderSound() {
 	if (!audioCtx || isSfxMuted) return;
 	const now = audioCtx.currentTime;
 	
+	// 1. Impacto inicial (Explosión)
 	const noise = audioCtx.createBufferSource();
 	noise.buffer = getNoiseBuffer();
 	const noiseFilter = audioCtx.createBiquadFilter();
 	noiseFilter.type = 'lowpass';
-	noiseFilter.frequency.setValueAtTime(800, now);
-	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 1.5);
+	noiseFilter.frequency.setValueAtTime(1500, now);
+	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 1.0);
 	
-	const gain = audioCtx.createGain();
-	gain.gain.setValueAtTime(1.0, now);
-	gain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
+	const noiseGain = audioCtx.createGain();
+	noiseGain.gain.setValueAtTime(0.8, now); // Ganancia segura para no saturar el limitador
+	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 4.0); // Cola larga
 	
 	noise.connect(noiseFilter);
-	noiseFilter.connect(gain);
-	gain.connect(masterSfxGain);
+	noiseFilter.connect(noiseGain);
+	noiseGain.connect(masterSfxGain);
+
+	// 2. Retumbe Sub-grave (Reverberancia baja y prolongada)
+	const subOsc = audioCtx.createOscillator();
+	subOsc.type = 'sine';
+	subOsc.frequency.setValueAtTime(55, now); // Frecuencia baja perfecta para parlantes
+	subOsc.frequency.exponentialRampToValueAtTime(20, now + 5.0);
 	
-	// Rumble osc
+	const subGain = audioCtx.createGain();
+	subGain.gain.setValueAtTime(0, now);
+	subGain.gain.linearRampToValueAtTime(0.8, now + 0.1); // Ataque rápido
+	subGain.gain.exponentialRampToValueAtTime(0.01, now + 5.0); // Cola súper larga de 5 segundos
+	
+	subOsc.connect(subGain);
+	subGain.connect(masterSfxGain);
+
+	// 3. Textura de crujido grave (Sierra filtrada)
 	const osc = audioCtx.createOscillator();
-	osc.type = 'square';
+	osc.type = 'sawtooth';
 	osc.frequency.setValueAtTime(40, now);
-	osc.frequency.exponentialRampToValueAtTime(10, now + 1.5);
+	osc.frequency.exponentialRampToValueAtTime(10, now + 4.0);
+	
+	const oscFilter = audioCtx.createBiquadFilter();
+	oscFilter.type = 'lowpass';
+	oscFilter.frequency.setValueAtTime(300, now);
+	oscFilter.frequency.exponentialRampToValueAtTime(40, now + 4.0);
+	
 	const oscGain = audioCtx.createGain();
-	oscGain.gain.setValueAtTime(0.8, now);
-	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 1.5);
-	osc.connect(oscGain);
+	oscGain.gain.setValueAtTime(0, now);
+	oscGain.gain.linearRampToValueAtTime(0.4, now + 0.2); // Ataque un poco más suave
+	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 4.0);
+	
+	osc.connect(oscFilter);
+	oscFilter.connect(oscGain);
 	oscGain.connect(masterSfxGain);
 	
 	noise.start(now);
-	noise.stop(now + 1.5);
+	noise.stop(now + 4.0);
+	subOsc.start(now);
+	subOsc.stop(now + 5.0);
 	osc.start(now);
-	osc.stop(now + 1.5);
+	osc.stop(now + 4.0);
 }
 
 let rainNoiseNode = null;
