@@ -10,8 +10,11 @@ import { Forest } from './objects/Forest.js';
 import { Eagle } from './objects/Eagle.js';
 import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
+import { WeaponManager } from './objects/Weapons.js';
+import { initAudio, playShootSound } from './utils/audio.js';
+import { HUD } from './ui/hud.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager;
 let mousePos = { x: 0, y: 0 };
 
 function createSea() {
@@ -107,6 +110,20 @@ function handleMouseMove(event) {
 	mousePos = { x: tx, y: ty };
 }
 
+function handleKeyDown(event) {
+	if (event.code === 'Space') {
+		initAudio();
+		if (airplane.fireMissile()) {
+			playShootSound();
+			HUD.updateAmmo(airplane.ammo);
+			
+			// Fire projectile from airplane's position (slightly ahead)
+			const p = airplane.mesh.position;
+			weaponManager.fire(p.x + 40, p.y - 5, p.z);
+		}
+	}
+}
+
 function loop() {
 	airplane.propeller.rotation.x += 0.3;
 
@@ -123,6 +140,7 @@ function loop() {
 	sea.moveWaves(); 
 	updatePlane();
 	updateEagle();
+	weaponManager.update();
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
@@ -141,8 +159,12 @@ function init() {
 	createEagle();
 	createGrass();
 	createRocks();
+	
+	weaponManager = new WeaponManager(scene);
+	HUD.init();
 
 	document.addEventListener('mousemove', handleMouseMove, false);
+	document.addEventListener('keydown', handleKeyDown, false);
 	loop();
 }
 

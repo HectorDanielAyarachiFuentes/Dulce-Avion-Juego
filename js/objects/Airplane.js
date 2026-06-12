@@ -180,4 +180,50 @@ export const AirPlane = function () {
 	this.pilot = new Pilot();
 	this.pilot.mesh.position.set(-10, 27, 0);
 	this.mesh.add(this.pilot.mesh);
+
+	this.missileMeshes = [];
+	
+	const missileGeom = new THREE.CylinderGeometry(2, 2, 15, 6);
+	missileGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI/2));
+	
+	const tipGeom = new THREE.ConeGeometry(2, 5, 6);
+	tipGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(-Math.PI/2));
+	tipGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(10, 0, 0));
+	
+	const missileMat = new THREE.MeshPhongMaterial({ color: Colors.white, flatShading: true });
+	const tipMat = new THREE.MeshPhongMaterial({ color: Colors.red, flatShading: true });
+	
+	for(let i=0; i<8; i++) {
+		const mContainer = new THREE.Object3D();
+		const body = new THREE.Mesh(missileGeom, missileMat);
+		const tip = new THREE.Mesh(tipGeom, tipMat);
+		body.castShadow = true;
+		tip.castShadow = true;
+		mContainer.add(body);
+		mContainer.add(tip);
+		
+		let zPos = 0;
+		if (i < 4) {
+			zPos = -60 + (i * 15);
+		} else {
+			zPos = 15 + ((i-4) * 15);
+		}
+		
+		mContainer.position.set(0, -5, zPos);
+		
+		this.mesh.add(mContainer);
+		this.missileMeshes.push(mContainer);
+	}
+	
+	this.ammo = 8;
+};
+
+AirPlane.prototype.fireMissile = function() {
+	if (this.ammo > 0) {
+		this.ammo--;
+		const missileVisual = this.missileMeshes[this.ammo];
+		missileVisual.visible = false;
+		return true;
+	}
+	return false;
 };
