@@ -33,18 +33,29 @@ export const HUD = {
 		this.mesh = new THREE.Object3D();
 		this.mesh.position.set(0, 0, -100);
 		
-		// HUD Panel Background (Más grande para acomodar el retrato a la derecha)
-		const panelGeom = new THREE.BoxGeometry(90, 26, 0.5);
-		const panelMat = new THREE.MeshPhongMaterial({ color: Colors.brown, flatShading: true });
+		// HUD Panel Background (Más ancho y metálico estilo low-poly)
+		const panelGeom = new THREE.BoxGeometry(100, 26, 0.5);
+		const panelMat = new THREE.MeshPhongMaterial({ color: 0x4a555c, flatShading: true });
 		const panel = new THREE.Mesh(panelGeom, panelMat);
 		panel.position.set(0, 0, -2);
 		this.mesh.add(panel);
 
-		const frameGeom = new THREE.BoxGeometry(92, 28, 0.2);
-		const frameMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+		const frameGeom = new THREE.BoxGeometry(102, 28, 0.2);
+		const frameMat = new THREE.MeshPhongMaterial({ color: 0x2a353c, flatShading: true });
 		const frame = new THREE.Mesh(frameGeom, frameMat);
 		frame.position.set(0, 0, -2.5);
 		this.mesh.add(frame);
+		
+		// Tornillos estilo industrial
+		const boltGeom = new THREE.CylinderGeometry(1.2, 1.2, 1, 6);
+		const boltMat = new THREE.MeshPhongMaterial({ color: 0x111111, flatShading: true });
+		const positions = [[-47, 11], [47, 11], [-47, -11], [47, -11]];
+		positions.forEach(pos => {
+			const bolt = new THREE.Mesh(boltGeom, boltMat);
+			bolt.rotation.x = Math.PI / 2;
+			bolt.position.set(pos[0], pos[1], -1.5);
+			this.mesh.add(bolt);
+		});
 		
 		// Inclinación 3D del tablero
 		this.mesh.rotation.y = 0.1;
@@ -60,59 +71,59 @@ export const HUD = {
 		const sMat = new THREE.MeshBasicMaterial({ map: this.scoreTexture, transparent: true });
 		const sGeom = new THREE.PlaneGeometry(30, 7);
 		this.scoreSprite = new THREE.Mesh(sGeom, sMat);
-		this.scoreSprite.position.set(-12, 8, 0); // Movido a la izquierda
+		this.scoreSprite.position.set(-15, 8, 0); // Movido más a la derecha
 		this.mesh.add(this.scoreSprite);
 		this.updateScore(0);
 		
 		// --- ROW 2: ENERGÍA / VIDA (Y = 2) ---
-		const energyText = createTextSprite("VIDA", "white");
-		energyText.position.set(-30, 2, 0);
-		this.mesh.add(energyText);
+		this.healthIcon = this.createHealthIcon();
+		this.healthIcon.position.set(-30, 2, 1);
+		this.mesh.add(this.healthIcon);
 
 		const energyBgGeom = new THREE.BoxGeometry(30, 3, 0.5);
-		const energyBgMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+		const energyBgMat = new THREE.MeshPhongMaterial({ color: 0x111111, flatShading: true });
 		const energyBg = new THREE.Mesh(energyBgGeom, energyBgMat);
-		energyBg.position.set(-5, 2, -0.5);
+		energyBg.position.set(-7, 2, -0.5);
 		this.mesh.add(energyBg);
 		
 		const energyBarGeom = new THREE.BoxGeometry(29, 2, 0.5);
 		this.energyBarMat = new THREE.MeshPhongMaterial({ color: Colors.green, flatShading: true });
 		const energyBar = new THREE.Mesh(energyBarGeom, this.energyBarMat);
 		energyBar.geometry.translate(14.5, 0, 0); // Eje a la izquierda
-		energyBar.position.set(-19.5, 2, 0);
+		energyBar.position.set(-21.5, 2, 0);
 		this.energyBarScale = energyBar;
 		this.mesh.add(energyBar);
 		
 		// --- ROW 3: MISILES (Y = -4) ---
-		const missileText = createTextSprite("MISILES", "white");
-		missileText.position.set(-30, -4, 0);
-		this.mesh.add(missileText);
+		this.missileIcon = this.createMissileIcon();
+		this.missileIcon.position.set(-30, -4, 1);
+		this.mesh.add(this.missileIcon);
 		
 		const missileGeom = new THREE.BoxGeometry(2.5, 2.5, 2.5);
 		this.activeMat = new THREE.MeshPhongMaterial({ color: Colors.red, flatShading: true });
 		this.inactiveMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
 		for(let i=0; i<8; i++) {
 			const m = new THREE.Mesh(missileGeom, this.activeMat);
-			m.position.set(-17 + (i * 3.5), -4, 0);
+			m.position.set(-19 + (i * 3.5), -4, 0);
 			this.mesh.add(m);
 			this.missiles.push(m);
 		}
 		
 		// --- ROW 4: ARMA CALENTAMIENTO (Y = -10) ---
-		const gunText = createTextSprite("ARMA", "white");
-		gunText.position.set(-30, -10, 0);
-		this.mesh.add(gunText);
+		this.gunIcon = this.createGunIcon();
+		this.gunIcon.position.set(-30, -10, 1);
+		this.mesh.add(this.gunIcon);
 		
 		const bgGeom = new THREE.BoxGeometry(30, 2, 1);
 		const bgBar = new THREE.Mesh(bgGeom, energyBgMat);
-		bgBar.position.set(-5, -10, -0.5);
+		bgBar.position.set(-7, -10, -0.5);
 		this.mesh.add(bgBar);
 		
 		const fillGeom = new THREE.BoxGeometry(29, 1.5, 1.5);
 		fillGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(14.5, 0, 0));
 		this.heatBarMat = new THREE.MeshPhongMaterial({ color: Colors.greenDark, flatShading: true });
 		this.heatBarScale = new THREE.Mesh(fillGeom, this.heatBarMat);
-		this.heatBarScale.position.set(-19.5, -10, 0);
+		this.heatBarScale.position.set(-21.5, -10, 0);
 		this.heatBarScale.scale.x = 0.001; 
 		this.mesh.add(this.heatBarScale);
 		
@@ -212,8 +223,8 @@ export const HUD = {
 			const scale = 0.6; // Reducir el tamaño del panel
 			this.mesh.scale.set(scale, scale, scale);
 			
-			// Ancho original 90, mitad 45. Escalado es 45 * scale
-			const targetX = leftX + (45 * scale) + 2; 
+			// Ancho original 100, mitad 50. Escalado es 50 * scale. +15 de margen.
+			const targetX = leftX + (50 * scale) + 15; 
 			// Alto original 26, mitad 13. Escalado es 13 * scale
 			const targetY = topY - (13 * scale) - 2;
 			
@@ -237,20 +248,20 @@ export const HUD = {
 	
 	addMiniPlane: function(miniMesh) {
 		const frameGeom = new THREE.BoxGeometry(24, 24, 1);
-		const frameMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
+		const frameMat = new THREE.MeshPhongMaterial({ color: 0x1a252f, flatShading: true });
 		const frame = new THREE.Mesh(frameGeom, frameMat);
-		frame.position.set(28, -1, 0);
+		frame.position.set(33, -1, 0);
 		this.mesh.add(frame);
 		
 		const bgGeom = new THREE.BoxGeometry(22, 22, 1);
 		this.miniBgMat = new THREE.MeshPhongMaterial({ color: 0xf7d9aa, flatShading: true });
 		const bg = new THREE.Mesh(bgGeom, this.miniBgMat);
-		bg.position.set(28, -1, 0.5);
+		bg.position.set(33, -1, 0.5);
 		this.mesh.add(bg);
 
 		this.miniPlane = miniMesh;
 		this.miniPlane.scale.set(0.12, 0.12, 0.12);
-		this.miniPlane.position.set(28, -1, 6); // Destacar desde el fondo
+		this.miniPlane.position.set(33, -1, 6); // Destacar desde el fondo
 		
 		// Destello de disparo (Sphere)
 		this.miniFlashMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0 });
@@ -273,6 +284,17 @@ export const HUD = {
 			}
 		});
 		
+		// Rotar los iconos 3D
+		if (this.healthIcon) this.healthIcon.rotation.y += 0.03;
+		if (this.missileIcon) {
+			this.missileIcon.rotation.x += 0.05;
+			this.missileIcon.rotation.y += 0.02;
+		}
+		if (this.gunIcon) {
+			this.gunIcon.rotation.x -= 0.05;
+			this.gunIcon.rotation.y += 0.02;
+		}
+		
 		// Decaer el destello
 		if (this.miniFlashMat && this.miniFlashMat.opacity > 0) {
 			this.miniFlashMat.opacity -= 0.1;
@@ -290,5 +312,56 @@ export const HUD = {
 			this.miniFlashMat.color.setHex(colorHex || 0xffff00);
 			this.miniFlashMat.opacity = 1.0;
 		}
+	},
+	
+	createHealthIcon: function() {
+		const icon = new THREE.Object3D();
+		const mat = new THREE.MeshPhongMaterial({ color: Colors.green, flatShading: true });
+		const m1 = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 1), mat);
+		const m2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4, 1), mat);
+		icon.add(m1);
+		icon.add(m2);
+		return icon;
+	},
+	
+	createMissileIcon: function() {
+		const icon = new THREE.Object3D();
+		const bodyMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
+		const headMat = new THREE.MeshPhongMaterial({ color: Colors.red, flatShading: true });
+		
+		const body = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3, 8), bodyMat);
+		body.rotation.z = Math.PI / 2;
+		
+		const head = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.5, 8), headMat);
+		head.rotation.z = -Math.PI / 2;
+		head.position.x = 2.25;
+		
+		const finGeom = new THREE.BoxGeometry(1.5, 3, 0.2);
+		const fins = new THREE.Mesh(finGeom, headMat);
+		fins.position.x = -1;
+		
+		icon.add(body);
+		icon.add(head);
+		icon.add(fins);
+		
+		icon.scale.set(0.9, 0.9, 0.9);
+		return icon;
+	},
+	
+	createGunIcon: function() {
+		const icon = new THREE.Object3D();
+		const mat = new THREE.MeshPhongMaterial({ color: Colors.yellow, flatShading: true });
+		
+		const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 3, 8), mat);
+		body.rotation.z = Math.PI / 2;
+		
+		const tip = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.5, 8), mat);
+		tip.rotation.z = -Math.PI / 2;
+		tip.position.x = 2.25;
+		
+		icon.add(body);
+		icon.add(tip);
+		icon.scale.set(0.9, 0.9, 0.9);
+		return icon;
 	}
 };
