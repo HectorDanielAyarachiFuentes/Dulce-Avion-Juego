@@ -261,6 +261,7 @@ function handleMouseDown(event) {
 			settingsModal.classList.remove('hidden');
 			gameState = 'paused';
 			document.body.classList.remove('playing');
+			if (typeof initPreview === 'function') initPreview(); // Start preview
 			return; // Don't shoot
 		}
 	}
@@ -543,6 +544,7 @@ function init() {
 			gameState = 'playing';
 			document.body.classList.add('playing');
 		}
+		if (typeof stopPreview === 'function') stopPreview();
 	});
 	
 	muteMusicChk.addEventListener('change', (e) => {
@@ -559,7 +561,11 @@ function init() {
 
 	if (planeColorSelect) {
 		planeColorSelect.addEventListener('change', (e) => {
-			airplane.applyStyle(parseInt(e.target.value));
+			const styleId = parseInt(e.target.value);
+			airplane.applyStyle(styleId);
+			if (typeof previewPlane !== 'undefined' && previewPlane) {
+				previewPlane.applyStyle(styleId);
+			}
 		});
 	}
 
@@ -568,6 +574,61 @@ function init() {
 	document.addEventListener('mouseup', handleMouseUp, false);
 	document.addEventListener('contextmenu', handleContextMenu, false);
 	loop();
+}
+
+// ==========================================
+// 3D PREVIEW FOR SETTINGS
+// ==========================================
+let previewScene, previewCamera, previewRenderer, previewPlane, previewAnimId;
+
+function initPreview() {
+	const canvas = document.getElementById('plane-preview-canvas');
+	if (!canvas) return;
+	
+	if (!previewScene) {
+		previewRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+		previewRenderer.setSize(300, 300);
+		
+		previewScene = new THREE.Scene();
+		previewCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+		previewCamera.position.set(0, 30, 120);
+		previewCamera.lookAt(0, 0, 0);
+		
+		const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+		const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+		dirLight.position.set(150, 350, 350);
+		previewScene.add(hemiLight);
+		previewScene.add(dirLight);
+		
+		previewPlane = new AirPlane();
+		previewPlane.mesh.scale.set(0.4, 0.4, 0.4);
+		previewScene.add(previewPlane.mesh);
+	}
+	
+	const planeSelect = document.getElementById('plane-color-select');
+	if (planeSelect) {
+		const styleId = parseInt(planeSelect.value);
+		previewPlane.applyStyle(styleId);
+	}
+	
+	function renderPreview() {
+		previewAnimId = requestAnimationFrame(renderPreview);
+		previewPlane.propeller.rotation.x += 0.3;
+		previewPlane.mesh.rotation.y += 0.015;
+		previewPlane.mesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.1;
+		previewPlane.mesh.position.y = Math.sin(Date.now() * 0.003) * 5; 
+		previewRenderer.render(previewScene, previewCamera);
+	}
+	
+	stopPreview(); // Ensure no duplicates
+	renderPreview();
+}
+
+function stopPreview() {
+	if (previewAnimId) {
+		cancelAnimationFrame(previewAnimId);
+		previewAnimId = null;
+	}
 }
 
 window.addEventListener('load', init, false);

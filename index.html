@@ -54,48 +54,57 @@
     
     <!-- MODAL DE AJUSTES -->
     <div id="settings-modal" class="hidden">
-        <div class="board">
-            <h2>AJUSTES DE VUELO</h2>
-            
-            <div class="setting-row">
-                <label>Silenciar Música</label>
-                <input type="checkbox" id="mute-music-chk">
+        <div class="settings-glass-board">
+            <div class="settings-content-wrapper">
+                <div class="settings-controls">
+                    <h2>AJUSTES DE VUELO</h2>
+                    
+                    <div class="setting-row">
+                        <label>Silenciar Música</label>
+                        <input type="checkbox" id="mute-music-chk">
+                    </div>
+                    
+                    <div class="setting-row">
+                        <label>Silenciar Efectos</label>
+                        <input type="checkbox" id="mute-sfx-chk">
+                    </div>
+                    
+                    <div class="setting-row">
+                        <label>Color del Avión</label>
+                        <select id="plane-color-select">
+                            <option value="1">1. Original (Rojo)</option>
+                            <option value="2">2. Argentina</option>
+                            <option value="3">3. Bolivia</option>
+                            <option value="4">4. Stealth Negro</option>
+                            <option value="5">5. Fuego</option>
+                            <option value="6">6. Militar</option>
+                            <option value="7">7. Oceánico</option>
+                            <option value="8">8. Neón Cyberpunk</option>
+                            <option value="9">9. Dorado Imperial</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-row">
+                        <label>Pista de Audio</label>
+                        <select id="track-select">
+                            <option value="0">1. Épica Original</option>
+                            <option value="1">2. Lamento de la Puna</option>
+                            <option value="2">3. Vuelo Solitario</option>
+                            <option value="3">4. Carnavalito</option>
+                            <option value="4">5. Caporal del Cielo</option>
+                            <option value="5">6. Nazca Espacial</option>
+                            <option value="6">7. Contacto en los Andes</option>
+                        </select>
+                    </div>
+                    
+                    <button id="close-settings-btn">VOLVER A VOLAR</button>
+                </div>
+                
+                <div class="settings-preview">
+                    <canvas id="plane-preview-canvas"></canvas>
+                    <div class="preview-label">Vista Previa 3D</div>
+                </div>
             </div>
-            
-            <div class="setting-row">
-                <label>Silenciar Efectos (SFX)</label>
-                <input type="checkbox" id="mute-sfx-chk">
-            </div>
-            
-            <div class="setting-row">
-                <label>Color del Avión</label>
-                <select id="plane-color-select">
-                    <option value="1">1. Original (Rojo)</option>
-                    <option value="2">2. Argentina</option>
-                    <option value="3">3. Bolivia</option>
-                    <option value="4">4. Stealth Negro</option>
-                    <option value="5">5. Fuego</option>
-                    <option value="6">6. Militar</option>
-                    <option value="7">7. Oceánico</option>
-                    <option value="8">8. Neón Cyberpunk</option>
-                    <option value="9">9. Dorado Imperial</option>
-                </select>
-            </div>
-            
-            <div class="setting-row">
-                <label>Pista de Audio</label>
-                <select id="track-select">
-                    <option value="0">1. Épica Original</option>
-                    <option value="1">2. Lamento de la Puna (Triste)</option>
-                    <option value="2">3. Vuelo Solitario (Triste)</option>
-                    <option value="3">4. Carnavalito en las Nubes (Alegre)</option>
-                    <option value="4">5. Caporal del Cielo (Alegre)</option>
-                    <option value="5">6. Nazca Espacial (Misterio/Alien)</option>
-                    <option value="6">7. Contacto en los Andes (Misterio/Alien)</option>
-                </select>
-            </div>
-            
-            <button id="close-settings-btn">CERRAR</button>
         </div>
     </div>
 
