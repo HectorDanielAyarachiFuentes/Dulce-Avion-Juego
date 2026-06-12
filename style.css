@@ -6,15 +6,3 @@
 	background: linear-gradient(#3b5764, #739aaf);
   /*background: linear-gradient(#739aaf, #f7d9aa);*/
 }
-
-#hud {
-	position: absolute;
-	top: 20px;
-	left: 20px;
-	color: #fff;
-	font-family: monospace;
-	font-size: 24px;
-	font-weight: bold;
-	text-shadow: 2px 2px 0 #000;
-	pointer-events: none;
-}

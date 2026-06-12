@@ -19,6 +19,8 @@ let mousePos = { x: 0, y: 0 };
 let isShootingMG = false;
 let mgTimer = 0;
 let reloadTimer = 0;
+let machineGunHeat = 0;
+let isOverheated = false;
 
 function createSea() {
 	sea = new Sea();
@@ -92,8 +94,9 @@ function updateEagle() {
 }
 
 function updatePlane() {
-	const targetY = normalize(mousePos.y, -.75, .75, 25, 175);
-	const targetX = normalize(mousePos.x, -.75, .75, -100, 100);
+	// Aumentamos considerablemente los límites para que el avión se mueva por toda la pantalla
+	const targetY = normalize(mousePos.y, -.75, .75, 25, 220);
+	const targetX = normalize(mousePos.x, -.75, .75, -200, 200);
 
 	// Move the plane in Y and X
 	airplane.mesh.position.y += (targetY - airplane.mesh.position.y) * 0.1;
@@ -118,7 +121,9 @@ function handleMouseDown(event) {
 	initAudio();
 	
 	if (event.button === 0) { // Left click
-		isShootingMG = true;
+		if (!isOverheated) {
+			isShootingMG = true;
+		}
 	} else if (event.button === 2) { // Right click
 		if (airplane.fireMissile()) {
 			playShootSound();
@@ -158,7 +163,7 @@ function loop() {
 	updatePlane();
 	updateEagle();
 	
-	if (isShootingMG) {
+	if (isShootingMG && !isOverheated) {
 		mgTimer++;
 		if (mgTimer > 3) {
 			mgTimer = 0;
@@ -166,7 +171,22 @@ function loop() {
 			const p = airplane.mesh.position;
 			weaponManager.fireMachineGun(p.x + 55, p.y - 10, p.z);
 		}
+		
+		machineGunHeat += 1.5;
+		if (machineGunHeat >= 100) {
+			machineGunHeat = 100;
+			isOverheated = true;
+			isShootingMG = false; // Fuerza detener el disparo
+		}
+	} else {
+		machineGunHeat -= 0.5;
+		if (machineGunHeat <= 0) {
+			machineGunHeat = 0;
+			isOverheated = false;
+		}
 	}
+	
+	HUD.updateHeat(machineGunHeat, isOverheated);
 	
 	// Auto-reload system
 	if (airplane.ammo < 8) {
@@ -189,6 +209,7 @@ function loop() {
 function init() {
 	createScene();
 	createLights(scene);
+	scene.add(camera);
 
 	createPlane();
 	createSea();
@@ -201,7 +222,7 @@ function init() {
 	createRocks();
 	
 	weaponManager = new WeaponManager(scene);
-	HUD.init();
+	HUD.init(camera);
 
 	document.addEventListener('mousemove', handleMouseMove, false);
 	document.addEventListener('mousedown', handleMouseDown, false);
