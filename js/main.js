@@ -8,8 +8,10 @@ import { AirPlane } from './objects/Airplane.js';
 import { Lakes } from './objects/Lakes.js';
 import { Forest } from './objects/Forest.js';
 import { Eagle } from './objects/Eagle.js';
+import { Grass } from './objects/Grass.js';
+import { Rocks } from './objects/Rocks.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks;
 let mousePos = { x: 0, y: 0 };
 
 function createSea() {
@@ -47,6 +49,18 @@ function createForest() {
 	forest = new Forest();
 	forest.mesh.position.y = -3000;
 	scene.add(forest.mesh);
+}
+
+function createGrass() {
+	grass = new Grass();
+	grass.mesh.position.y = -3000;
+	scene.add(grass.mesh);
+}
+
+function createRocks() {
+	rocks = new Rocks();
+	rocks.mesh.position.y = -3000;
+	scene.add(rocks.mesh);
 }
 
 function createEagle() {
@@ -102,6 +116,8 @@ function loop() {
 	forest.mesh.rotation.z += .002;
 	mountains.mesh.rotation.z += .002;
 	sky.mesh.rotation.z += .004;
+	grass.mesh.rotation.z += .002;
+	rocks.mesh.rotation.z += .002;
 
 	airplane.pilot.updateHairs();
 	sea.moveWaves(); 
@@ -123,6 +139,8 @@ function init() {
 	createMountains();
 	createSky();
 	createEagle();
+	createGrass();
+	createRocks();
 
 	document.addEventListener('mousemove', handleMouseMove, false);
 	loop();
