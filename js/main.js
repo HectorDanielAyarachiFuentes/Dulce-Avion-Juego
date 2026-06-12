@@ -5,8 +5,11 @@ import { Sea } from './objects/Sea.js';
 import { Mountains } from './objects/Mountains.js';
 import { Sky } from './objects/Sky.js';
 import { AirPlane } from './objects/Airplane.js';
+import { Lakes } from './objects/Lakes.js';
+import { Forest } from './objects/Forest.js';
+import { Eagle } from './objects/Eagle.js';
 
-let sea, mountains, sky, airplane;
+let sea, mountains, sky, airplane, lakes, forest, eagle;
 let mousePos = { x: 0, y: 0 };
 
 function createSea() {
@@ -32,6 +35,40 @@ function createPlane() {
 	airplane.mesh.scale.set(.25, .25, .25);
 	airplane.mesh.position.y = 100;
 	scene.add(airplane.mesh);
+}
+
+function createLakes() {
+	lakes = new Lakes();
+	lakes.mesh.position.y = -3000;
+	scene.add(lakes.mesh);
+}
+
+function createForest() {
+	forest = new Forest();
+	forest.mesh.position.y = -3000;
+	scene.add(forest.mesh);
+}
+
+function createEagle() {
+	eagle = new Eagle();
+	eagle.mesh.scale.set(0.3, 0.3, 0.3);
+	eagle.mesh.position.set(100, 150, -300);
+	scene.add(eagle.mesh);
+}
+
+function updateEagle() {
+	eagle.flapWings();
+	
+	// Fly towards the camera
+	eagle.mesh.position.x -= 0.5; // fly left slightly
+	eagle.mesh.position.z += 2;   // fly towards camera
+	
+	// If the eagle flies past the camera, reset it far away
+	if (eagle.mesh.position.z > 200) {
+		eagle.mesh.position.y = 50 + Math.random() * 150;
+		eagle.mesh.position.x = -200 + Math.random() * 400;
+		eagle.mesh.position.z = -800 - Math.random() * 400;
+	}
 }
 
 function updatePlane() {
@@ -61,12 +98,15 @@ function loop() {
 
 	// Rotar el "treadmill" gigante
 	sea.mesh.rotation.z += .002;
+	lakes.mesh.rotation.z += .002;
+	forest.mesh.rotation.z += .002;
 	mountains.mesh.rotation.z += .002;
 	sky.mesh.rotation.z += .004;
 
 	airplane.pilot.updateHairs();
 	sea.moveWaves(); 
 	updatePlane();
+	updateEagle();
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
@@ -78,8 +118,11 @@ function init() {
 
 	createPlane();
 	createSea();
+	createLakes();
+	createForest();
 	createMountains();
 	createSky();
+	createEagle();
 
 	document.addEventListener('mousemove', handleMouseMove, false);
 	loop();
