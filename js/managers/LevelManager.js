@@ -174,7 +174,7 @@ export const LevelManager = {
 		levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
 		document.getElementById('level-up-message').classList.remove('hidden');
 		
-		const { victoryScene, airplane, mothership, enemyManager, weaponManager, camera, scene } = this.context;
+		const { victoryScene, airplane, mothership, enemyManager, weaponManager, camera, scene, bgBattle } = this.context;
 		
 		if (victoryScene) {
 			victoryScene.activate();
@@ -184,6 +184,7 @@ export const LevelManager = {
 			
 			airplane.mesh.visible = false;
 			if (mothership) mothership.mesh.visible = false;
+			if (bgBattle) bgBattle.mesh.visible = false;
 			HUD.hide();
 			
 			if (enemyManager) enemyManager.reset();

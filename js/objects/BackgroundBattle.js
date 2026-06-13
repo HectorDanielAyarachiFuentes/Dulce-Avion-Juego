@@ -7,6 +7,8 @@ export const BackgroundBattle = function(scene) {
 	this.lasers = [];
 	
 	this.active = true;
+	this.mesh = new THREE.Group();
+	this.scene.add(this.mesh);
 	
 	// Create small fighters
 	for (let i = 0; i < 20; i++) {
@@ -22,7 +24,7 @@ export const BackgroundBattle = function(scene) {
 			-5000 + (Math.random() - 0.5) * 1000
 		);
 		
-		this.scene.add(mesh);
+		this.mesh.add(mesh);
 		this.fighters.push({
 			mesh: mesh,
 			isAlien: isAlien,
@@ -47,7 +49,7 @@ export const BackgroundBattle = function(scene) {
 	this.nukeMesh.add(this.nukeRing);
 	
 	this.nukeMesh.position.set(-500, 400, -5000);
-	this.scene.add(this.nukeMesh);
+	this.mesh.add(this.nukeMesh);
 	
 	this.nukeActive = false;
 	this.nukeTimer = 0;
@@ -97,7 +99,7 @@ BackgroundBattle.prototype.update = function(time, ambientLight, level = 1) {
 			laser.rotation.z = Math.random() * Math.PI * 2;
 			laser.rotation.y = Math.random() * Math.PI * 2;
 			
-			this.scene.add(laser);
+			this.mesh.add(laser);
 			this.lasers.push({ mesh: laser, life: 60 });
 		}
 	}
@@ -108,7 +110,7 @@ BackgroundBattle.prototype.update = function(time, ambientLight, level = 1) {
 		l.mesh.translateX(20);
 		l.life--;
 		if (l.life <= 0) {
-			this.scene.remove(l.mesh);
+			this.mesh.remove(l.mesh);
 			this.lasers.splice(i, 1);
 		}
 	}
