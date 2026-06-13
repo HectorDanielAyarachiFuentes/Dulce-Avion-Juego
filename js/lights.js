@@ -1,11 +1,11 @@
 export let hemisphereLight, shadowLight, ambientLight;
 
 export function createLights(scene) {
-	ambientLight = new THREE.AmbientLight(0xdc8874, 1.5);
+	ambientLight = new THREE.AmbientLight(0xdc8874, 3.5);
 
-	hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 2.8);
+	hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 4.5);
 
-	shadowLight = new THREE.DirectionalLight(0xffffff, 2.8);
+	shadowLight = new THREE.DirectionalLight(0xffffff, 4.5);
 	shadowLight.position.set(150, 350, 350);
 	shadowLight.castShadow = true;
 
