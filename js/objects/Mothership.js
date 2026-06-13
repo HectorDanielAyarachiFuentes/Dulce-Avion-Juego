@@ -119,10 +119,21 @@ export const Mothership = function() {
 	this.hitboxRadiusSq = (300) * (300); 
 };
 
-Mothership.prototype.startBossFight = function() {
-	if (this.state !== "creeping") return;
-	this.state = "intro";
-	this.introTimer = 0;
+Mothership.prototype.startBossFight = function(skipIntro = false) {
+	if (this.state === "combat" || this.state === "dead") return;
+	if (skipIntro) {
+		// Saltar la animación de intro e ir directo al combate
+		this.state = "combat";
+		this.attackState = "idle";
+		this.attackTimer = 0;
+		this.mesh.position.set(150, 100, -50);
+		this.mesh.rotation.z = -0.2;
+		this.mesh.rotation.x = 0.2;
+		this.deathRay.material.opacity = 0;
+	} else {
+		this.state = "intro";
+		this.introTimer = 0;
+	}
 };
 
 Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
@@ -138,7 +149,7 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 	else if (this.state === "intro") {
 		this.introTimer++;
 		// Acelera hacia el lado derecho de la pantalla (más lejos)
-		this.mesh.position.x += (350 - this.mesh.position.x) * 0.05; 
+		this.mesh.position.x += (150 - this.mesh.position.x) * 0.05; 
 		this.mesh.position.y += (100 - this.mesh.position.y) * 0.05; 
 		this.mesh.position.z += (-50 - this.mesh.position.z) * 0.05;
 		
@@ -159,7 +170,7 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		this.attackTimer++;
 		// Movimiento vertical de jefe clásico
 		this.mesh.position.y = 100 + Math.sin(time * 0.002) * 80;
-		this.mesh.position.x = 350 + Math.sin(time * 0.001) * 30; // Hover leve en X
+		this.mesh.position.x = 150 + Math.sin(time * 0.001) * 30; // Hover leve en X
 		
 		// Mantenerlo inclinado ominosamente
 		this.mesh.rotation.z = -0.2;

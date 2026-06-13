@@ -42,6 +42,52 @@ let energy = 100;
 let gameState = 'welcome'; // 'welcome', 'playing', 'paused'
 let currentLevel = 1;
 
+let radioTimeoutId = null;
+let bossTimeoutId = null;
+
+function clearLevel5Timeouts() {
+	if (radioTimeoutId) clearTimeout(radioTimeoutId);
+	if (bossTimeoutId) clearTimeout(bossTimeoutId);
+	radioTimeoutId = null;
+	bossTimeoutId = null;
+}
+
+function startLevel5Sequence(skipAscent = false) {
+	clearLevel5Timeouts();
+	targetWorldY = -8000; // El mundo se hunde para simular vuelo a gran altitud
+	
+	if (skipAscent) {
+		// Si ya le habíamos hecho daño al jefe, saltar la intro de 20s y entrar directo al combate
+		airplane.isSearchingRadio = false;
+		airplane.showMotivationAura = true;
+		playSalsaSong();
+		if (mothership) mothership.startBossFight(true);
+		HUD.showBossUI();
+		return;
+	}
+	
+	// 1. Animación de buscar radio y sonido de sintonía
+	airplane.isSearchingRadio = true;
+	playRadioTuningSound();
+	
+	// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
+	radioTimeoutId = setTimeout(() => {
+		if (gameState !== 'welcome' && currentLevel === 5) {
+			airplane.isSearchingRadio = false;
+			airplane.showMotivationAura = true;
+			playSalsaSong();
+			
+			// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
+			bossTimeoutId = setTimeout(() => {
+				if (gameState !== 'welcome' && currentLevel === 5) {
+					if (mothership) mothership.startBossFight();
+					HUD.showBossUI();
+				}
+			}, 20000);
+		}
+	}, 2000);
+}
+
 function checkLevelUp() {
 	let newLevel = 1;
 	if (score >= 2000) newLevel = 5;
@@ -55,28 +101,7 @@ function checkLevelUp() {
 		updateEnvironmentColor();
 		
 		if (currentLevel === 5) {
-			targetWorldY = -8000; // El mundo se hunde para simular vuelo a gran altitud
-			
-			// 1. Animación de buscar radio y sonido de sintonía
-			airplane.isSearchingRadio = true;
-			playRadioTuningSound();
-			
-			// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
-			setTimeout(() => {
-				if (gameState !== 'welcome' && currentLevel === 5) {
-					airplane.isSearchingRadio = false;
-					airplane.showMotivationAura = true;
-					playSalsaSong();
-					
-					// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
-					setTimeout(() => {
-						if (gameState !== 'welcome' && currentLevel === 5) {
-							if (mothership) mothership.startBossFight();
-							HUD.showBossUI();
-						}
-					}, 20000);
-				}
-			}, 2000);
+			startLevel5Sequence();
 		}
 	}
 }
@@ -412,38 +437,28 @@ function resetGame() {
 	
 	if (mothership) {
 		mothership.state = "creeping";
-		mothership.health = mothership.maxHealth;
+		// Solo restaurar la vida si empezamos de cero (nivel < 5) o si ya estaba muerto
+		if (selectedLevel < 5 || mothership.health <= 0) {
+			mothership.health = mothership.maxHealth;
+		}
 		mothership.mesh.position.set(-800, 800, -6000);
 		mothership.deathRay.material.opacity = 0;
 	}
 	HUD.hideBossUI();
 	
+	clearLevel5Timeouts();
+	
 	// Si iniciamos directamente en el Nivel 5, lanzar la transición al Jefe
 	if (currentLevel === 5) {
-		targetWorldY = -8000;
-		
-		// 1. Animación de buscar radio y sonido de sintonía
-		airplane.isSearchingRadio = true;
-		playRadioTuningSound();
-		
-		// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
-		setTimeout(() => {
-			if (gameState !== 'welcome' && currentLevel === 5) {
-				airplane.isSearchingRadio = false;
-				airplane.showMotivationAura = true;
-				playSalsaSong();
-				
-				// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
-				setTimeout(() => {
-					if (gameState !== 'welcome' && currentLevel === 5) {
-						if (mothership) mothership.startBossFight();
-						HUD.showBossUI();
-					}
-				}, 20000);
-			}
-		}, 2000);
+		// Si ya le habíamos quitado vida al jefe, saltar el ascenso de 20s
+		const bossAlreadyDamaged = mothership && mothership.health < mothership.maxHealth && mothership.health > 0;
+		startLevel5Sequence(bossAlreadyDamaged);
 	} else {
 		stopSalsaSong();
+		if (airplane) {
+			airplane.isSearchingRadio = false;
+			airplane.showMotivationAura = false;
+		}
 	}
 }
 
