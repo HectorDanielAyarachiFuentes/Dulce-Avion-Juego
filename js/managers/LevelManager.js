@@ -3,7 +3,7 @@
  */
 import { GameState } from '../core/GameState.js';
 import { HUD } from '../ui/hud.js';
-import { playSalsaSong, playRadioTuningSound } from '../utils/audio.js';
+import { playSalsaSong, stopSalsaSong, playRadioTuningSound } from '../utils/audio.js';
 
 export const LevelManager = {
 	context: null,
@@ -167,6 +167,7 @@ export const LevelManager = {
 
 	triggerVictory: function() {
 		GameState.gameState = 'victory'; // Halt main game loop immediately!
+		playSalsaSong(); // Reproducir la salsa de Marc Anthony en la escena de créditos
 		
 		const levelText = document.getElementById('level-text');
 		const levelSubtext = document.getElementById('level-subtext');
@@ -207,6 +208,7 @@ export const LevelManager = {
 	resetGame: function(startLevel = 1) {
 		const { airplane, sea, enemyManager, weaponManager, rain, mothership, victoryScene, camera, lakes, forest, eagle, grass, rocks, sky, bgBattle, mountains } = this.context;
 		
+		stopSalsaSong(); // Detener la salsa cuando se reinicia el juego o se vuelve al menú
 		GameState.reset(startLevel);
 		airplane.reset();
 		sea.reset();
@@ -242,8 +244,8 @@ export const LevelManager = {
 		HUD.show();
 		
 		// Restaurar cámara
-		camera.position.set(0, 100, 200);
-		camera.lookAt(0, 0, 0);
+		camera.position.set(0, 100, 280);
+		camera.lookAt(0, 100, 0);
 		
 		// Si se inicia directamente en el nivel 5, activar la secuencia del jefe
 		if (startLevel === 5) {
