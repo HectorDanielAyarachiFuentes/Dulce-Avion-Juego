@@ -291,7 +291,7 @@ export const HUD = {
 		
 		// Rotar también la hélice del mini avión
 		this.miniPlane.children.forEach(child => {
-			if (child.position.x === 50 && child.position.y === 0) { 
+			if (child.position.x === 70 && child.position.y === 0) { 
 				child.rotation.x = mainAirplane.propeller.rotation.x;
 			}
 		});

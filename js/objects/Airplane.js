@@ -100,7 +100,7 @@ Pilot.prototype.updateHairs = function () {
 export const AirPlane = function () {
 	this.mesh = new THREE.Object3D();
 
-	const geomCockpit = new THREE.BoxGeometry(80, 50, 50, 1, 1, 1);
+	const geomCockpit = new THREE.BoxGeometry(120, 50, 50, 1, 1, 1);
 	this.matCockpit = new THREE.MeshPhongMaterial({
 		color: Colors.red,
 		flatShading: true
@@ -131,7 +131,7 @@ export const AirPlane = function () {
 		flatShading: true
 	});
 	const engine = new THREE.Mesh(geomEngine, this.matEngine);
-	engine.position.x = 40;
+	engine.position.x = 60;
 	engine.castShadow = true;
 	engine.receiveShadow = true;
 	this.mesh.add(engine);
@@ -142,10 +142,30 @@ export const AirPlane = function () {
 		flatShading: true
 	});
 	const tailPlane = new THREE.Mesh(geomTailPlane, this.matTailPlane);
-	tailPlane.position.set(-35, 25, 0);
+	tailPlane.position.set(-55, 20, 0);
 	tailPlane.castShadow = true;
 	tailPlane.receiveShadow = true;
+	
+	// Timón de dirección (Rudder) en diferente color para que se vea
+	const geomRudder = new THREE.BoxGeometry(6, 18, 4);
+	const rudder = new THREE.Mesh(geomRudder, this.matEngine); // Blanco
+	rudder.position.set(-8, 0, 0);
+	tailPlane.add(rudder);
 	this.mesh.add(tailPlane);
+
+	// Estabilizadores horizontales de cola
+	const geomHorizTail = new THREE.BoxGeometry(15, 4, 50);
+	const horizTail = new THREE.Mesh(geomHorizTail, this.matTailPlane);
+	horizTail.position.set(-55, 5, 0);
+	horizTail.castShadow = true;
+	horizTail.receiveShadow = true;
+	
+	// Alerones de cola (Elevators)
+	const geomElevator = new THREE.BoxGeometry(6, 4, 46);
+	const elevator = new THREE.Mesh(geomElevator, this.matEngine); // Blanco
+	elevator.position.set(-8, 0, 0);
+	horizTail.add(elevator);
+	this.mesh.add(horizTail);
 
 	const geomSideWing = new THREE.BoxGeometry(40, 8, 150, 1, 1, 1);
 	this.matSideWing = new THREE.MeshPhongMaterial({
@@ -157,7 +177,40 @@ export const AirPlane = function () {
 	sideWing.receiveShadow = true;
 	this.mesh.add(sideWing);
 
-	const geomPropeller = new THREE.BoxGeometry(20, 10, 10, 1, 1, 1);
+	// Alerones en las alas (usando color de contraste para que resalten)
+	const geomAileron = new THREE.BoxGeometry(10, 4, 35);
+	const aileronR = new THREE.Mesh(geomAileron, this.matEngine); // Blancos
+	aileronR.position.set(-25, 0, 50); // Más atrás para que sobresalgan del ala
+	aileronR.castShadow = true;
+	sideWing.add(aileronR);
+	const aileronL = new THREE.Mesh(geomAileron, this.matEngine);
+	aileronL.position.set(-25, 0, -50);
+	aileronL.castShadow = true;
+	sideWing.add(aileronL);
+
+	// Remaches oscuros (agrupados en el motor frontal y alas donde no hay deformación)
+	const rivetMat = new THREE.MeshPhongMaterial({ color: 0x303030, flatShading: true });
+	const rivetGeom = new THREE.BoxGeometry(2, 2, 2);
+	
+	// Remaches en el motor
+	for (let i = 0; i < 3; i++) {
+		const r1 = new THREE.Mesh(rivetGeom, rivetMat);
+		r1.position.set(0, 15 - i * 15, 25);
+		const r2 = new THREE.Mesh(rivetGeom, rivetMat);
+		r2.position.set(0, 15 - i * 15, -25);
+		engine.add(r1, r2);
+	}
+	// Remaches en las alas
+	for (let i = 0; i < 4; i++) {
+		const r1 = new THREE.Mesh(rivetGeom, rivetMat);
+		r1.position.set(10, 4, 30 + i * 12);
+		const r2 = new THREE.Mesh(rivetGeom, rivetMat);
+		r2.position.set(10, 4, -30 - i * 12);
+		sideWing.add(r1, r2);
+	}
+
+	// Hélice
+	const geomPropeller = new THREE.BoxGeometry(15, 15, 15, 1, 1, 1);
 	const matPropeller = new THREE.MeshPhongMaterial({
 		color: Colors.brown,
 		flatShading: true
@@ -166,31 +219,55 @@ export const AirPlane = function () {
 	this.propeller.castShadow = true;
 	this.propeller.receiveShadow = true;
 
-	const geomBlade = new THREE.BoxGeometry(1, 100, 20, 1, 1, 1);
+	// Cono de la hélice (Spinner)
+	const spinnerGeom = new THREE.ConeGeometry(8, 15, 8);
+	spinnerGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(-Math.PI/2));
+	const spinner = new THREE.Mesh(spinnerGeom, matPropeller);
+	spinner.position.x = 10;
+	this.propeller.add(spinner);
+
+	// Aspas más realistas
+	const geomBlade = new THREE.BoxGeometry(2, 35, 6, 1, 1, 1);
+	// Mover el pivote a la base del aspa
+	geomBlade.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 17.5, 0));
+	
 	const matBlade = new THREE.MeshPhongMaterial({
 		color: Colors.brownDark,
 		flatShading: true
 	});
 
-	const blade = new THREE.Mesh(geomBlade, matBlade);
-	blade.position.set(8, 0, 0);
-	blade.castShadow = true;
-	blade.receiveShadow = true;
-	this.propeller.add(blade);
-	this.propeller.position.set(50, 0, 0);
+	// Crear 3 aspas anguladas
+	for (let i = 0; i < 3; i++) {
+		const blade = new THREE.Mesh(geomBlade, matBlade);
+		blade.rotation.x = i * (Math.PI * 2 / 3); // 120 grados
+		blade.rotation.y = 0.3; // Ángulo de ataque del aspa
+		blade.position.x = 5;
+		blade.castShadow = true;
+		blade.receiveShadow = true;
+		this.propeller.add(blade);
+	}
+	
+	this.propeller.position.set(70, 0, 0);
 	this.mesh.add(this.propeller);
 	
-	// Cañón Frontal
+	// Cañones en las Alas
 	const cannonGeom = new THREE.CylinderGeometry(2, 2, 20, 8);
 	cannonGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI/2));
 	const cannonMat = new THREE.MeshPhongMaterial({ color: Colors.brownDark, flatShading: true });
-	const cannon = new THREE.Mesh(cannonGeom, cannonMat);
-	cannon.position.set(55, -10, 0);
-	cannon.castShadow = true;
-	this.mesh.add(cannon);
+	
+	const cannonR = new THREE.Mesh(cannonGeom, cannonMat);
+	cannonR.position.set(15, -5, 30);
+	cannonR.castShadow = true;
+	this.mesh.add(cannonR);
 
+	const cannonL = new THREE.Mesh(cannonGeom, cannonMat);
+	cannonL.position.set(15, -5, -30);
+	cannonL.castShadow = true;
+	this.mesh.add(cannonL);
+
+	// (Old floating fuselage rivets removed)
 	this.pilot = new Pilot();
-	this.pilot.mesh.position.set(-10, 27, 0);
+	this.pilot.mesh.position.set(-20, 27, 0);
 	this.mesh.add(this.pilot.mesh);
 
 	this.missileMeshes = [];

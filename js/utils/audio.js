@@ -677,3 +677,59 @@ export function stopRainSound() {
 		rainGainNode = null;
 	}, 1000);
 }
+
+let propellerOscNode = null;
+let propellerGainNode = null;
+
+export function startPropellerSound() {
+	if (!audioCtx) initAudio();
+	if (propellerOscNode) return;
+	
+	const now = audioCtx.currentTime;
+	propellerOscNode = audioCtx.createOscillator();
+	propellerOscNode.type = 'sawtooth';
+	propellerOscNode.frequency.value = 60; // Frecuencia baja simulando el motor y las aspas
+	
+	const filter = audioCtx.createBiquadFilter();
+	filter.type = 'lowpass';
+	filter.frequency.value = 300; // Cortar agudos para un zumbido sordo
+	
+	propellerGainNode = audioCtx.createGain();
+	propellerGainNode.gain.setValueAtTime(0, now);
+	propellerGainNode.gain.linearRampToValueAtTime(0.4, now + 1.0); // Fade in
+	
+	propellerOscNode.connect(filter);
+	filter.connect(propellerGainNode);
+	propellerGainNode.connect(masterSfxGain);
+	
+	propellerOscNode.start(now);
+}
+
+export function stopPropellerSound() {
+	if (!propellerOscNode) return;
+	const now = audioCtx.currentTime;
+	if (propellerGainNode) {
+		propellerGainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+	}
+	propellerOscNode.stop(now + 0.5);
+	setTimeout(() => {
+		propellerOscNode = null;
+		propellerGainNode = null;
+	}, 600);
+}
+
+export function setPropellerPitch(pitchFactor, isLooping) {
+	if (!propellerOscNode || !propellerGainNode) return;
+	const now = audioCtx.currentTime;
+	
+	if (isLooping) {
+		// Sonido agudo de motor bajo estrés por fuerza G
+		propellerOscNode.frequency.setTargetAtTime(140, now, 0.05); 
+		propellerGainNode.gain.setTargetAtTime(0.8, now, 0.05); 
+	} else {
+		// Pitch normal varía entre 60 y 100 dependiendo de la aceleración
+		const targetFreq = 50 + (pitchFactor * 50); 
+		propellerOscNode.frequency.setTargetAtTime(targetFreq, now, 0.2); 
+		propellerGainNode.gain.setTargetAtTime(0.4, now, 0.2);
+	}
+}

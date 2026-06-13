@@ -19,7 +19,7 @@ import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
 import { EnemyManager } from './objects/Enemies.js';
-import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound, startPropellerSound, stopPropellerSound, setPropellerPitch } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 import { Rain } from './objects/Rain.js';
 
@@ -251,6 +251,12 @@ function updatePlane() {
 			loopAngle = 0;
 		}
 	}
+	
+	// Factor de pitch de la hélice basado en la velocidad (qué tan lejos está el objetivo y cuánto se mueve)
+	// mousePos.y va de -1 a 1 (arriba es 1). Al acelerar hacia arriba (+1) el motor ruge más.
+	const planeSpeed = Math.sqrt(diffX*diffX + diffY*diffY) * 0.1; 
+	const pitchFactor = Math.min(Math.max((mousePos.y + 1) / 2 + (planeSpeed / 10), 0), 1.0);
+	setPropellerPitch(pitchFactor, isLooping);
 
 	// Aplicar rotaciones
 	if (isLooping) {
@@ -321,13 +327,16 @@ function handleMouseDown(event) {
 			isShootingMG = true;
 		}
 	} else if (event.button === 2) { // Right click
+		const missileIndex = airplane.ammo - 1;
 		if (airplane.fireMissile()) {
 			playShootSound();
 			HUD.updateAmmo(airplane.ammo);
 			
 			const p = airplane.mesh.position;
-			// El misil sale de más abajo (alas)
-			weaponManager.fireMissile(p.x + 40, p.y - 5, p.z);
+			// El misil sale de su posición visual exacta en las alas
+			const missileMesh = airplane.missileMeshes[missileIndex];
+			const localZ = missileMesh.position.z;
+			weaponManager.fireMissile(p.x + 10, p.y - 5, p.z + localZ);
 			
 			if (HUD.showMiniFlash) HUD.showMiniFlash(0xff8800); // Naranja para misiles
 		}
@@ -404,9 +413,14 @@ function loop() {
 				mgTimer = 0;
 				playMachineGunSound();
 				const p = airplane.mesh.position;
-				// La bala y el humo salen de la punta exacta del cañón (x=65, y=-10)
-				weaponManager.fireMachineGun(p.x + 65, p.y - 10, p.z);
-				weaponManager.spawnMuzzleSmoke(p.x + 65, p.y - 10, p.z);
+				
+				// Disparamos dos balas simultáneamente desde los cañones de las alas
+				weaponManager.fireMachineGun(p.x + 15, p.y - 5, p.z + 30);
+				weaponManager.spawnMuzzleSmoke(p.x + 15, p.y - 5, p.z + 30);
+				
+				weaponManager.fireMachineGun(p.x + 15, p.y - 5, p.z - 30);
+				weaponManager.spawnMuzzleSmoke(p.x + 15, p.y - 5, p.z - 30);
+				
 				if (HUD.showMiniFlash) HUD.showMiniFlash(0xffff00); // Amarillo para ametralladora
 			}
 			
@@ -506,7 +520,11 @@ function loop() {
 				const ufo = enemyManager.ufos[j];
 				if (!ufo.active) continue;
 				
-				if (proj.mesh.position.distanceTo(ufo.mesh.position) < 25) {
+				const dx = proj.mesh.position.x - ufo.mesh.position.x;
+				const dy = proj.mesh.position.y - ufo.mesh.position.y;
+				const distSq = dx*dx + dy*dy;
+				
+				if (distSq < 625) { // 25 * 25
 					// Hit
 					ufo.hitPoints--;
 					if (proj.speed < 10) ufo.hitPoints -= 2; // Misiles hacen más daño
@@ -586,6 +604,7 @@ function init() {
 		document.body.classList.add('playing');
 		resetGame();
 		playEpicSong(); // Esto iniciará el loop procedural
+		startPropellerSound(); // Inicia el zumbido de la avioneta
 	});
 	
 	closeSettingsBtn.addEventListener('click', () => {
