@@ -9,9 +9,17 @@
       "three.core.min.js": "Three.js internal core logic (required by the module)."
     },
     "js/": {
-      "main.js": "Game loop, initialization, level logic, global game state, and input handling.",
+      "main.js": "Game loop initialization and orchestration. It coordinates managers instead of holding logic directly.",
       "scene.js": "Three.js scene, camera, and renderer setup.",
       "lights.js": "Scene lighting setup.",
+      "core/": {
+        "GameState.js": "Centralized global state for the game (score, energy, level, etc.)."
+      },
+      "managers/": {
+        "InputManager.js": "Handles mouse, touch, and keyboard events.",
+        "LevelManager.js": "Handles environment updates, level transitions, and resets.",
+        "UIManager.js": "Handles DOM interactions, buttons, settings, and start menus."
+      },
       "objects/": {
         "Airplane.js": "Player character model and animation logic.",
         "Weapons.js": "Weapon systems, bullets, and firing mechanics.",

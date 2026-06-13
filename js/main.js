@@ -26,218 +26,13 @@ import { Mothership } from './objects/Mothership.js';
 import { BackgroundBattle } from './objects/BackgroundBattle.js';
 import { VictoryScene } from './objects/VictoryScene.js';
 
+import { GameState } from './core/GameState.js';
+import { InputManager } from './managers/InputManager.js';
+import { LevelManager } from './managers/LevelManager.js';
+import { UIManager } from './managers/UIManager.js';
+
 let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle, victoryScene;
-let mousePos = { x: 0, y: 0 };
 
-let currentWorldY = -3000;
-let targetWorldY = -3000;
-let isShootingMG = false;
-let mgTimer = 0;
-let reloadTimer = 0;
-let machineGunHeat = 0;
-let isOverheated = false;
-
-// Global Game State
-let score = 0;
-let energy = 100;
-let gameState = 'welcome'; // 'welcome', 'playing', 'paused'
-let currentLevel = 1;
-
-let radioTimeoutId = null;
-let bossTimeoutId = null;
-
-function clearLevel5Timeouts() {
-	if (radioTimeoutId) clearTimeout(radioTimeoutId);
-	if (bossTimeoutId) clearTimeout(bossTimeoutId);
-	radioTimeoutId = null;
-	bossTimeoutId = null;
-}
-
-function startLevel5Sequence(skipAscent = false) {
-	clearLevel5Timeouts();
-	targetWorldY = -8000; // El mundo se hunde para simular vuelo a gran altitud
-	
-	if (skipAscent) {
-		// Si ya le habíamos hecho daño al jefe, saltar la intro de 20s y entrar directo al combate
-		airplane.isSearchingRadio = false;
-		airplane.showMotivationAura = true;
-		playSalsaSong();
-		if (mothership) mothership.startBossFight(true);
-		HUD.showBossUI();
-		return;
-	}
-	
-	// 1. Animación de buscar radio y sonido de sintonía
-	airplane.isSearchingRadio = true;
-	playRadioTuningSound();
-	
-	// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
-	radioTimeoutId = setTimeout(() => {
-		if (gameState !== 'welcome' && currentLevel === 5) {
-			airplane.isSearchingRadio = false;
-			airplane.showMotivationAura = true;
-			playSalsaSong();
-			
-			// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
-			bossTimeoutId = setTimeout(() => {
-				if (gameState !== 'welcome' && currentLevel === 5) {
-					if (mothership) mothership.startBossFight();
-					HUD.showBossUI();
-				}
-			}, 20000);
-		}
-	}, 2000);
-}
-
-function checkLevelUp() {
-	let newLevel = 1;
-	if (score >= 2000) newLevel = 5;
-	else if (score >= 1500) newLevel = 4;
-	else if (score >= 1000) newLevel = 3;
-	else if (score >= 500) newLevel = 2;
-	
-	if (newLevel > currentLevel) {
-		currentLevel = newLevel;
-		showLevelUpMessage();
-		updateEnvironmentColor();
-		
-		if (currentLevel === 5) {
-			startLevel5Sequence();
-		}
-	}
-}
-
-function triggerVictory() {
-	// YOU WIN logic
-	gameState = 'victory'; // Halt main game loop immediately!
-	
-	const levelText = document.getElementById('level-text');
-	const levelSubtext = document.getElementById('level-subtext');
-	levelText.innerText = "¡VICTORIA!";
-	levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
-	document.getElementById('level-up-message').classList.remove('hidden');
-	
-	// Activar escena 3D de victoria inmediatamente
-	if (victoryScene) {
-		victoryScene.activate();
-		
-		// Stop the world from moving
-		gameSpeed = 0;
-		targetGameSpeed = 0;
-		
-		// Ocultar avión jugador, HUD y jefe
-		airplane.mesh.visible = false;
-		if (mothership) mothership.mesh.visible = false;
-		HUD.hide();
-		
-		// Destruir todos los aliens y proyectiles
-		if (enemyManager) enemyManager.reset();
-		if (weaponManager) weaponManager.projectiles = [];
-		
-		// Restaurar colores y luces del nivel 1 (Día)
-		currentLevel = 1;
-		updateEnvironmentColor();
-		
-		// Cámara mirando la escena de victoria (un poco más cerca y abajo para ver bien el suelo)
-		camera.position.set(100, 60, 120);
-		camera.lookAt(10, 20, 0);
-	}
-	
-	setTimeout(() => {
-		document.getElementById('level-up-message').classList.add('hidden');
-		// Mostrar botón de volver al menú como overlay y scrollear créditos
-		document.getElementById('credits-screen').classList.remove('hidden');
-		gameState = 'gameover'; // Final state
-	}, 3000);
-}
-
-function showLevelUpMessage() {
-	const msgBox = document.getElementById('level-up-message');
-	const levelText = document.getElementById('level-text');
-	const levelSubtext = document.getElementById('level-subtext');
-	
-	levelText.innerText = "NIVEL " + currentLevel;
-	if (currentLevel === 2) levelSubtext.innerText = "ATARDECER ROJO";
-	if (currentLevel === 3) levelSubtext.innerText = "NOCHE OSCURA";
-	if (currentLevel === 4) levelSubtext.innerText = "TORMENTA FINAL";
-	if (currentLevel === 5) levelSubtext.innerText = "LA NODRIZA ALIENÍGENA";
-	
-	msgBox.classList.remove('hidden');
-	setTimeout(() => {
-		msgBox.classList.add('hidden');
-	}, 3000);
-}
-
-function updateEnvironmentColor() {
-	const aviator = document.querySelector('.aviator');
-	
-	if (currentLevel === 1) { // Día Claro
-		aviator.style.background = 'linear-gradient(#3b5764, #739aaf)';
-		scene.fog.color.setHex(0xf7d9aa);
-		ambientLight.color.setHex(0xdc8874);
-		ambientLight.intensity = 0.5;
-		hemisphereLight.intensity = 0.9;
-		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x3b5764);
-	} 
-	else if (currentLevel === 2) { // Atardecer
-		aviator.style.background = 'linear-gradient(#e44d2e, #f2a878)';
-		scene.fog.color.setHex(0xf2a878);
-		ambientLight.color.setHex(0xdc8874);
-		ambientLight.intensity = 0.8;
-		hemisphereLight.intensity = 0.6;
-	}
-	else if (currentLevel === 3) { // Noche Oscura
-		aviator.style.background = 'linear-gradient(#08131a, #1a2a36)';
-		scene.fog.color.setHex(0x1a2a36);
-		ambientLight.color.setHex(0x555577);
-		ambientLight.intensity = 0.3;
-		hemisphereLight.intensity = 0.3;
-		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x08131a);
-	}
-	else if (currentLevel === 4) { // Tormenta
-		aviator.style.background = 'linear-gradient(#111111, #333333)';
-		scene.fog.color.setHex(0x222222);
-		ambientLight.color.setHex(0x444455);
-		ambientLight.intensity = 0.2;
-		hemisphereLight.intensity = 0.2;
-	}
-	else if (currentLevel === 5) { // Boss
-		aviator.style.background = 'linear-gradient(#330000, #110000)';
-		scene.fog.color.setHex(0x330000);
-		ambientLight.color.setHex(0xff3333);
-		ambientLight.intensity = 0.5;
-		hemisphereLight.intensity = 0.2;
-		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x110000);
-	}
-
-	if (typeof sky !== 'undefined' && sky.sun && sky.moon) {
-		if (currentLevel === 1) {
-			sky.sun.visible = true;
-			sky.moon.visible = false;
-			sky.sun.material.color.setHex(0xffd700); // Sol amarillo
-		} else if (currentLevel === 2) {
-			sky.sun.visible = true;
-			sky.moon.visible = false;
-			sky.sun.material.color.setHex(0xff5500); // Sol naranja de atardecer
-		} else if (currentLevel === 3) {
-			sky.sun.visible = false;
-			sky.moon.visible = true;
-			if (sky.moonMat) sky.moonMat.color.setHex(0xeef4f5); // Luna brillante
-		} else if (currentLevel === 4) {
-			sky.sun.visible = false;
-			sky.moon.visible = true;
-			if (sky.moonMat) sky.moonMat.color.setHex(0x8899aa); // Luna opacada por tormenta
-		}
-	}
-	
-	if (currentLevel === 4) {
-		if (rain) rain.mesh.visible = true;
-		startRainSound();
-	} else {
-		if (rain) rain.mesh.visible = false;
-		stopRainSound();
-	}
-}
 
 function createSea() {
 	sea = new Sea();
@@ -328,8 +123,8 @@ function updatePlane() {
 
 	// Mapeo directo de la posición del ratón (-1 a 1) a las coordenadas del mundo
 	// Multiplicamos por 0.95 para dejar un ligero margen y que el avión no se corte
-	let targetY = camera.position.y + (mousePos.y * topY * 0.95);
-	const targetX = (mousePos.x * rightX * 0.95);
+	let targetY = camera.position.y + (InputManager.mousePos.y * topY * 0.95);
+	const targetX = (InputManager.mousePos.x * rightX * 0.95);
 	
 	const mouseDeltaX = targetX - lastTargetX;
 	lastTargetX = targetX;
@@ -363,9 +158,9 @@ function updatePlane() {
 	}
 	
 	// Factor de pitch de la hélice basado en la velocidad (qué tan lejos está el objetivo y cuánto se mueve)
-	// mousePos.y va de -1 a 1 (arriba es 1). Al acelerar hacia arriba (+1) el motor ruge más.
+	// InputManager.mousePos.y va de -1 a 1 (arriba es 1). Al acelerar hacia arriba (+1) el motor ruge más.
 	const planeSpeed = Math.sqrt(diffX*diffX + diffY*diffY) * 0.1; 
-	const pitchFactor = Math.min(Math.max((mousePos.y + 1) / 2 + (planeSpeed / 10), 0), 1.0);
+	const pitchFactor = Math.min(Math.max((InputManager.mousePos.y + 1) / 2 + (planeSpeed / 10), 0), 1.0);
 	setPropellerPitch(pitchFactor, isLooping);
 
 	// Aplicar rotaciones
@@ -384,11 +179,11 @@ function updatePlane() {
 	airplane.propeller.rotation.x += 0.3;
 	
 	// Daño visual (Humo si la vida baja del 50%)
-	if (energy < 50) {
-		if (Math.random() < (50 - energy) * 0.015) { // Mientras menos vida, más humo
+	if (GameState.energy < 50) {
+		if (Math.random() < (50 - GameState.energy) * 0.015) { // Mientras menos vida, más humo
 			const p = airplane.mesh.position;
 			weaponManager.spawnSmoke(p.x - 20, p.y + 10, p.z);
-			if (energy < 20 && Math.random() > 0.5) {
+			if (GameState.energy < 20 && Math.random() > 0.5) {
 				weaponManager.spawnSpark(p.x - 20, p.y + 10, p.z); // Chispas si está crítico
 			}
 		}
@@ -402,110 +197,7 @@ function updatePlane() {
 	}
 }
 
-function handleMouseMove(event) {
-	if (gameState !== 'playing') return;
-	const tx = -1 + (event.clientX / window.innerWidth) * 2;
-	const ty = 1 - (event.clientY / window.innerHeight) * 2;
-	mousePos = { x: tx, y: ty };
-}
 
-function handleMouseDown(event) {
-	if (gameState !== 'playing') return;
-	event.preventDefault();
-	initAudio();
-	
-	// Raycaster for checking if we clicked the 3D Gear Settings Icon
-	const tx = -1 + (event.clientX / window.innerWidth) * 2;
-	const ty = 1 - (event.clientY / window.innerHeight) * 2;
-	const raycaster = new THREE.Raycaster();
-	raycaster.setFromCamera({x: tx, y: ty}, camera);
-	
-	if (HUD.gearMesh) {
-		const intersects = raycaster.intersectObject(HUD.gearMesh, true);
-		if (intersects.length > 0) {
-			const settingsModal = document.getElementById('settings-modal');
-			settingsModal.classList.remove('hidden');
-			gameState = 'paused';
-			document.body.classList.remove('playing');
-			if (typeof initPreview === 'function') initPreview(); // Start preview
-			return; // Don't shoot
-		}
-	}
-	
-	if (event.button === 0) { // Left click
-		if (!isOverheated) {
-			isShootingMG = true;
-		}
-	} else if (event.button === 2) { // Right click
-		const missileIndex = airplane.ammo - 1;
-		if (airplane.fireMissile()) {
-			playShootSound();
-			HUD.updateAmmo(airplane.ammo);
-			
-			const p = airplane.mesh.position;
-			// El misil sale de su posición visual exacta en las alas
-			const missileMesh = airplane.missileMeshes[missileIndex];
-			const localZ = missileMesh.position.z;
-			weaponManager.fireMissile(p.x + 10, p.y - 5, p.z + localZ);
-			
-			if (HUD.showMiniFlash) HUD.showMiniFlash(0xff8800); // Naranja para misiles
-		}
-	}
-}
-
-function handleMouseUp(event) {
-	if (gameState !== 'playing') return;
-	if (event.button === 0) {
-		isShootingMG = false;
-	}
-}
-
-function handleContextMenu(event) {
-	event.preventDefault();
-}
-
-function resetGame() {
-	energy = 100;
-	const startSelect = document.getElementById('start-level-select');
-	const selectedLevel = startSelect ? parseInt(startSelect.value) : 1;
-	if (selectedLevel === 1) score = 0;
-	if (selectedLevel === 2) score = 500;
-	if (selectedLevel === 3) score = 1000;
-	if (selectedLevel === 4) score = 1500;
-	if (selectedLevel === 5) score = 2000;
-	currentLevel = selectedLevel;
-	updateEnvironmentColor();
-	HUD.updateEnergy(energy);
-	HUD.updateScore(score);
-	
-	targetWorldY = -3000;
-	
-	if (mothership) {
-		mothership.state = "creeping";
-		// Solo restaurar la vida si empezamos de cero (nivel < 5) o si ya estaba muerto
-		if (selectedLevel < 5 || mothership.health <= 0) {
-			mothership.health = mothership.maxHealth;
-		}
-		mothership.mesh.position.set(-800, 800, -6000);
-		mothership.deathRay.material.opacity = 0;
-	}
-	HUD.hideBossUI();
-	
-	clearLevel5Timeouts();
-	
-	// Si iniciamos directamente en el Nivel 5, lanzar la transición al Jefe
-	if (currentLevel === 5) {
-		// Si ya le habíamos quitado vida al jefe, saltar el ascenso de 20s
-		const bossAlreadyDamaged = mothership && mothership.health < mothership.maxHealth && mothership.health > 0;
-		startLevel5Sequence(bossAlreadyDamaged);
-	} else {
-		stopSalsaSong();
-		if (airplane) {
-			airplane.isSearchingRadio = false;
-			airplane.showMotivationAura = false;
-		}
-	}
-}
 
 function loop() {
 	airplane.propeller.rotation.x += 0.3;
@@ -524,18 +216,18 @@ function loop() {
 	rocks.mesh.rotation.z += .002;
 	
 	// Transición de altitud del mundo
-	if (currentWorldY !== targetWorldY) {
-		currentWorldY += (targetWorldY - currentWorldY) * 0.01;
-		sea.mesh.position.y = currentWorldY;
-		lakes.mesh.position.y = currentWorldY;
-		forest.mesh.position.y = currentWorldY;
-		mountains.mesh.position.y = currentWorldY;
-		grass.mesh.position.y = currentWorldY;
-		rocks.mesh.position.y = currentWorldY;
+	if (GameState.currentWorldY !== GameState.targetWorldY) {
+		GameState.currentWorldY += (GameState.targetWorldY - GameState.currentWorldY) * 0.01;
+		sea.mesh.position.y = GameState.currentWorldY;
+		lakes.mesh.position.y = GameState.currentWorldY;
+		forest.mesh.position.y = GameState.currentWorldY;
+		mountains.mesh.position.y = GameState.currentWorldY;
+		grass.mesh.position.y = GameState.currentWorldY;
+		rocks.mesh.position.y = GameState.currentWorldY;
 	}
 	
 	// Efecto de relámpagos en el nivel 4
-	if (currentLevel === 4) {
+	if (GameState.currentLevel === 4) {
 		if (Math.random() < 0.02) {
 			// Destello intenso
 			ambientLight.intensity = 3.0;
@@ -545,22 +237,22 @@ function loop() {
 		} else {
 			// Volver rápido a la oscuridad
 			ambientLight.intensity += (0.2 - ambientLight.intensity) * 0.1;
-			scene.fog.color.lerp(new THREE.Color(0x222222), 0.1);
+			scene.fog.color.lerp(new window.THREE.Color(0x222222), 0.1);
 			document.querySelector('.aviator').style.background = 'linear-gradient(#111111, #333333)';
 		}
 	}
 
-	if (gameState === 'playing') {
+	if (GameState.gameState === 'playing') {
 		airplane.pilot.update(airplane.isSearchingRadio, airplane.showMotivationAura);
 		sea.moveWaves(); 
 		if (rain) rain.update();
 		updatePlane();
 		updateEagle();
 		
-		if (isShootingMG && !isOverheated) {
-			mgTimer++;
-			if (mgTimer > 3) {
-				mgTimer = 0;
+		if (GameState.isShootingMG && !GameState.isOverheated) {
+			GameState.mgTimer++;
+			if (GameState.mgTimer > 3) {
+				GameState.mgTimer = 0;
 				playMachineGunSound();
 				const p = airplane.mesh.position;
 				
@@ -574,36 +266,36 @@ function loop() {
 				if (HUD.showMiniFlash) HUD.showMiniFlash(0xffff00); // Amarillo para ametralladora
 			}
 			
-			machineGunHeat += 0.6;
-			if (machineGunHeat >= 100) {
-				machineGunHeat = 100;
-				isOverheated = true;
-				isShootingMG = false; // Fuerza detener el disparo
+			GameState.machineGunHeat += 0.6;
+			if (GameState.machineGunHeat >= 100) {
+				GameState.machineGunHeat = 100;
+				GameState.isOverheated = true;
+				GameState.isShootingMG = false; // Fuerza detener el disparo
 			}
 		} else {
-			machineGunHeat -= 0.6;
-			if (machineGunHeat <= 0) {
-				machineGunHeat = 0;
-				isOverheated = false;
+			GameState.machineGunHeat -= 0.6;
+			if (GameState.machineGunHeat <= 0) {
+				GameState.machineGunHeat = 0;
+				GameState.isOverheated = false;
 			}
 		}
 		
-		HUD.updateHeat(machineGunHeat, isOverheated);
+		HUD.updateHeat(GameState.machineGunHeat, GameState.isOverheated);
 		
 		// Auto-reload system
 		if (airplane.ammo < 8) {
-			reloadTimer++;
-			if (reloadTimer > 180) { // Approx 3 seconds to reload 1 missile
+			GameState.reloadTimer++;
+			if (GameState.reloadTimer > 180) { // Approx 3 seconds to reload 1 missile
 				airplane.reloadMissile();
 				HUD.updateAmmo(airplane.ammo);
-				reloadTimer = 0;
+				GameState.reloadTimer = 0;
 			}
 		} else {
-			reloadTimer = 0;
+			GameState.reloadTimer = 0;
 		}
 		
 		// Update Enemies
-		enemyManager.update(Date.now(), airplane.mesh.position.y, currentLevel, () => {
+		enemyManager.update(Date.now(), airplane.mesh.position.y, GameState.currentLevel, () => {
 			playAlienLaserSound();
 		});
 		
@@ -615,12 +307,12 @@ function loop() {
 			const laser = enemyManager.lasers[i];
 			if (laser.active && laser.mesh.position.distanceTo(planePos) < 20) {
 				laser.active = false; // Destroy laser
-				energy -= 10;
-				HUD.updateEnergy(energy);
+				GameState.energy -= 5; // Reduced from 10
+				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
-				if (energy <= 0) {
-					resetGame();
+				if (GameState.energy <= 0) {
+					LevelManager.resetGame();
 				}
 			}
 		}
@@ -633,12 +325,12 @@ function loop() {
 				playExplosionSound();
 				weaponManager.spawnSmoke(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
 				
-				energy -= (ufo.type === 'kamikaze') ? 25 : 15;
-				HUD.updateEnergy(energy);
+				GameState.energy -= (ufo.type === 'kamikaze') ? 15 : 10; // Reduced from 25 : 15
+				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
-				if (energy <= 0) {
-					resetGame();
+				if (GameState.energy <= 0) {
+					LevelManager.resetGame();
 				}
 			}
 		}
@@ -651,12 +343,12 @@ function loop() {
 				playExplosionSound();
 				weaponManager.spawnSmoke(bomb.mesh.position.x, bomb.mesh.position.y, bomb.mesh.position.z);
 				
-				energy -= 30; // Las bombas hacen mucho daño
-				HUD.updateEnergy(energy);
+				GameState.energy -= 15; // Las bombas hacen menos daño, reducido de 30
+				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
-				if (energy <= 0) {
-					resetGame();
+				if (GameState.energy <= 0) {
+					LevelManager.resetGame();
 				}
 			}
 		}
@@ -687,15 +379,15 @@ function loop() {
 						playExplosionSound();
 						weaponManager.spawnSmoke(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
 						
-						score += 100;
+						GameState.score += 100;
 						
 						// Rescue check
 						if (enemyManager.releaseCaptive(ufo)) {
 							playRescueSound();
-							score += 500; // 500 points por salvar a la vaca/humano
+							GameState.score += 500; // 500 points por salvar a la vaca/humano
 						}
-						HUD.updateScore(score);
-						checkLevelUp();
+						HUD.updateScore(GameState.score);
+						LevelManager.checkLevelUp();
 					}
 					break; // Projectile destroyed, check next
 				}
@@ -709,7 +401,7 @@ function loop() {
 		
 		// Update epic background
 		if (mothership) {
-			mothership.update(Date.now(), currentLevel, enemyManager);
+			mothership.update(Date.now(), GameState.currentLevel, enemyManager);
 			if (mothership.state === "combat" || mothership.state === "intro") {
 				HUD.updateBossHealth(mothership.health, mothership.maxHealth);
 				
@@ -717,9 +409,9 @@ function loop() {
 				if (mothership.attackState === "deathray" && mothership.attackTimer > 100 && mothership.attackTimer < 250) {
 					// Extremely simplified: if player is roughly in center of screen
 					if (Math.abs(airplane.mesh.position.y - 100) < 60) {
-						energy -= 1.0;
-						HUD.updateEnergy(energy);
-						if (energy <= 0) resetGame();
+						GameState.energy -= 1.0;
+						HUD.updateEnergy(GameState.energy);
+						if (GameState.energy <= 0) LevelManager.resetGame();
 					}
 				}
 				
@@ -741,20 +433,20 @@ function loop() {
 						
 						if (mothership.health <= 0 && mothership.state !== "dead") {
 							mothership.state = "dead";
-							bgBattle.triggerNuke(currentLevel); // Massive death explosion
-							score += 5000;
+							bgBattle.triggerNuke(GameState.currentLevel); // Massive death explosion
+							GameState.score += 5000;
 							HUD.hideBossUI();
 							
-							triggerVictory();
+							LevelManager.triggerVictory();
 						}
 					}
 				}
 			}
 		}
 		if (bgBattle) {
-			bgBattle.update(Date.now(), ambientLight, currentLevel);
+			bgBattle.update(Date.now(), ambientLight, GameState.currentLevel);
 			if (Math.random() < 0.0005) { // ~ once every 33 seconds at 60fps
-				bgBattle.triggerNuke(currentLevel);
+				bgBattle.triggerNuke(GameState.currentLevel);
 			}
 		}
 	}
@@ -794,152 +486,20 @@ function init() {
 	enemyManager = new EnemyManager(scene);
 	HUD.init(camera);
 	HUD.addMiniPlane(airplane.mesh.clone());
-	HUD.updateScore(score);
-	HUD.updateEnergy(energy);
+	HUD.updateScore(GameState.score);
+	HUD.updateEnergy(GameState.energy);
 	
-	// Botón de Inicio
-	const startBtn = document.getElementById('start-btn');
-	const welcomeScreen = document.getElementById('welcome-screen');
-	
-	// Controles de Ajustes
-	const settingsModal = document.getElementById('settings-modal');
-	const closeSettingsBtn = document.getElementById('close-settings-btn');
-	const muteMusicChk = document.getElementById('mute-music-chk');
-	const muteSfxChk = document.getElementById('mute-sfx-chk');
-	const fullscreenBtn = document.getElementById('fullscreen-btn');
-	const trackSelect = document.getElementById('track-select');
-	const planeColorSelect = document.getElementById('plane-color-select');
-	
-	startBtn.addEventListener('click', () => {
-		welcomeScreen.classList.add('hidden');
-		gameState = 'playing';
-		document.body.classList.add('playing');
-		resetGame();
-		playEpicSong(); // Esto iniciará el loop procedural
-		startPropellerSound(); // Inicia el zumbido de la avioneta
-	});
-	
-	const testVictoryBtn = document.getElementById('test-victory-btn');
-	if (testVictoryBtn) {
-		testVictoryBtn.addEventListener('click', () => {
-			welcomeScreen.classList.add('hidden');
-			gameState = 'playing';
-			document.body.classList.add('playing');
-			resetGame();
-			
-			// Simulate killing the boss
-			currentLevel = 5;
-			if (mothership) mothership.health = 0;
-			triggerVictory();
-		});
-	}
-	
-	const restartBtn = document.getElementById('restart-btn');
-	if (restartBtn) {
-		restartBtn.addEventListener('click', () => {
-			// Volver al menú de forma suave sin recargar
-			document.getElementById('credits-screen').classList.add('hidden');
-			welcomeScreen.classList.remove('hidden');
-			gameState = 'menu';
-			document.body.classList.remove('playing');
-			
-			// Desactivar escena de victoria y restaurar objetos del juego
-			if (victoryScene) victoryScene.deactivate();
-			airplane.mesh.visible = true;
-			sea.mesh.visible = true;
-			mountains.mesh.visible = true;
-			sky.mesh.visible = true;
-			if (lakes) lakes.mesh.visible = true;
-			if (forest) forest.mesh.visible = true;
-			if (eagle) eagle.mesh.visible = true;
-			if (grass) grass.mesh.visible = true;
-			if (rocks) rocks.mesh.visible = true;
-			if (rain) rain.mesh.visible = true;
-			mothership.mesh.visible = true;
-			if (bgBattle) bgBattle.mesh.visible = true;
-			HUD.show();
-			
-			// Restaurar cámara
-			camera.position.set(0, 100, 200);
-			camera.lookAt(0, 0, 0);
-			
-			// Restaurar cielo del menú (nivel 1)
-			const aviator = document.querySelector('.aviator');
-			aviator.style.background = 'linear-gradient(#3b5764, #739aaf)';
-			
-			// Limpiar los enemigos y proyectiles
-			enemyManager.reset();
-			weaponManager.projectiles = [];
-			
-			// Parar la música de salsa
-			stopSalsaSong();
-			if (airplane) {
-				airplane.isSearchingRadio = false;
-				airplane.showMotivationAura = false;
-			}
-		});
-	}
-	
-	closeSettingsBtn.addEventListener('click', () => {
-		settingsModal.classList.add('hidden');
-		// Si estábamos pausados, volvemos a jugar (siempre y cuando ya hayamos pasado el menu inicial)
-		if (gameState === 'paused' && welcomeScreen.classList.contains('hidden')) {
-			gameState = 'playing';
-			document.body.classList.add('playing');
+	// Inicializar Managers
+	InputManager.init(window.innerWidth, window.innerHeight, { camera, HUD, airplane, weaponManager });
+	LevelManager.init({ scene, camera, airplane, mothership, victoryScene, enemyManager, weaponManager, sea, mountains, lakes, forest, eagle, grass, rocks, sky, rain, bgBattle, ambientLight, hemisphereLight });
+	UIManager.init(airplane, mothership);
+
+	document.addEventListener('styleChanged', (e) => {
+		if (typeof previewPlane !== 'undefined' && previewPlane) {
+			previewPlane.applyStyle(e.detail);
 		}
-		if (typeof stopPreview === 'function') stopPreview();
-	});
-	
-	muteMusicChk.addEventListener('change', (e) => {
-		setMusicMuted(e.target.checked);
-	});
-	
-	muteSfxChk.addEventListener('change', (e) => {
-		setSfxMuted(e.target.checked);
-	});
-	
-	if (fullscreenBtn) {
-		fullscreenBtn.addEventListener('click', () => {
-			if (!document.fullscreenElement) {
-				document.documentElement.requestFullscreen().catch(err => {
-					console.log(`Error al intentar activar pantalla completa: ${err.message}`);
-				});
-				fullscreenBtn.innerText = "Desactivar";
-			} else {
-				if (document.exitFullscreen) {
-					document.exitFullscreen();
-					fullscreenBtn.innerText = "Activar";
-				}
-			}
-		});
-		
-		document.addEventListener('fullscreenchange', () => {
-			if (!document.fullscreenElement) {
-				fullscreenBtn.innerText = "Activar";
-			} else {
-				fullscreenBtn.innerText = "Desactivar";
-			}
-		});
-	}
-	
-	trackSelect.addEventListener('change', (e) => {
-		setSongId(parseInt(e.target.value));
 	});
 
-	if (planeColorSelect) {
-		planeColorSelect.addEventListener('change', (e) => {
-			const styleId = parseInt(e.target.value);
-			airplane.applyStyle(styleId);
-			if (typeof previewPlane !== 'undefined' && previewPlane) {
-				previewPlane.applyStyle(styleId);
-			}
-		});
-	}
-
-	document.addEventListener('mousemove', handleMouseMove, false);
-	document.addEventListener('mousedown', handleMouseDown, false);
-	document.addEventListener('mouseup', handleMouseUp, false);
-	document.addEventListener('contextmenu', handleContextMenu, false);
 	loop();
 }
 
