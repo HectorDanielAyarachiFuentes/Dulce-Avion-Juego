@@ -41,16 +41,17 @@ let currentLevel = 1;
 
 function checkLevelUp() {
 	let newLevel = 1;
-	if (score >= 7000) newLevel = 4;
-	else if (score >= 3500) newLevel = 3;
-	else if (score >= 1500) newLevel = 2;
+	if (score >= 2000) newLevel = 5;
+	else if (score >= 1500) newLevel = 4;
+	else if (score >= 1000) newLevel = 3;
+	else if (score >= 500) newLevel = 2;
 	
 	if (newLevel > currentLevel) {
 		currentLevel = newLevel;
 		showLevelUpMessage();
 		updateEnvironmentColor();
 		
-		if (currentLevel === 4) {
+		if (currentLevel === 5) {
 			mothership.startBossFight();
 			HUD.showBossUI();
 		}
@@ -66,6 +67,7 @@ function showLevelUpMessage() {
 	if (currentLevel === 2) levelSubtext.innerText = "ATARDECER ROJO";
 	if (currentLevel === 3) levelSubtext.innerText = "NOCHE OSCURA";
 	if (currentLevel === 4) levelSubtext.innerText = "TORMENTA FINAL";
+	if (currentLevel === 5) levelSubtext.innerText = "LA NODRIZA ALIENÍGENA";
 	
 	msgBox.classList.remove('hidden');
 	setTimeout(() => {
@@ -105,6 +107,14 @@ function updateEnvironmentColor() {
 		ambientLight.color.setHex(0x444455);
 		ambientLight.intensity = 0.2;
 		hemisphereLight.intensity = 0.2;
+	}
+	else if (currentLevel === 5) { // Boss
+		aviator.style.background = 'linear-gradient(#330000, #110000)';
+		scene.fog.color.setHex(0x330000);
+		ambientLight.color.setHex(0xff3333);
+		ambientLight.intensity = 0.5;
+		hemisphereLight.intensity = 0.2;
+		if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x110000);
 	}
 
 	if (typeof sky !== 'undefined' && sky.sun && sky.moon) {
@@ -366,9 +376,10 @@ function resetGame() {
 	const startSelect = document.getElementById('start-level-select');
 	const selectedLevel = startSelect ? parseInt(startSelect.value) : 1;
 	if (selectedLevel === 1) score = 0;
-	if (selectedLevel === 2) score = 1500;
-	if (selectedLevel === 3) score = 3500;
-	if (selectedLevel === 4) score = 7000;
+	if (selectedLevel === 2) score = 500;
+	if (selectedLevel === 3) score = 1000;
+	if (selectedLevel === 4) score = 1500;
+	if (selectedLevel === 5) score = 2000;
 	currentLevel = selectedLevel;
 	updateEnvironmentColor();
 	HUD.updateEnergy(energy);
@@ -606,7 +617,7 @@ function loop() {
 						
 						if (mothership.health <= 0 && mothership.state !== "dead") {
 							mothership.state = "dead";
-							bgBattle.triggerNuke(4); // Massive death explosion
+							bgBattle.triggerNuke(currentLevel); // Massive death explosion
 							score += 5000;
 							HUD.hideBossUI();
 							
