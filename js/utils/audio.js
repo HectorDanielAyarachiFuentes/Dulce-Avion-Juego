@@ -64,36 +64,40 @@ export function playShootSound() {
 	if (!audioCtx || isSfxMuted) return;
 	const now = audioCtx.currentTime;
 
+	// 1. "Thump" de salida (baja frecuencia rápida)
 	const osc = audioCtx.createOscillator();
-	osc.type = 'sawtooth';
-	osc.frequency.setValueAtTime(150, now);
-	osc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+	osc.type = 'sine'; // Suave y con graves
+	osc.frequency.setValueAtTime(250, now);
+	osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
 	
 	const oscGain = audioCtx.createGain();
-	oscGain.gain.setValueAtTime(0.6, now);
-	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+	oscGain.gain.setValueAtTime(0.6, now); // Golpe inicial
+	oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
 	
 	osc.connect(oscGain);
 	oscGain.connect(masterSfxGain);
 	
+	// 2. "Whoosh" del cohete (ruido filtrado)
 	const noise = audioCtx.createBufferSource();
 	noise.buffer = getNoiseBuffer();
 	const noiseFilter = audioCtx.createBiquadFilter();
-	noiseFilter.type = 'lowpass';
-	noiseFilter.frequency.setValueAtTime(2000, now);
-	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+	noiseFilter.type = 'bandpass';
+	noiseFilter.frequency.setValueAtTime(1000, now);
+	noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+	noiseFilter.Q.value = 1.5; // Resonancia para darle cuerpo
+	
 	const noiseGain = audioCtx.createGain();
-	noiseGain.gain.setValueAtTime(0.8, now);
-	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+	noiseGain.gain.setValueAtTime(0.4, now); // Volumen medio
+	noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
 	
 	noise.connect(noiseFilter);
 	noiseFilter.connect(noiseGain);
 	noiseGain.connect(masterSfxGain);
 	
 	osc.start(now);
-	osc.stop(now + 0.6);
+	osc.stop(now + 0.15);
 	noise.start(now);
-	noise.stop(now + 0.6);
+	noise.stop(now + 0.25);
 }
 
 export function playMachineGunSound() {
