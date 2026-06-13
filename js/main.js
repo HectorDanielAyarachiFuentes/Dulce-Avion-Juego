@@ -630,14 +630,15 @@ function initPreview() {
 	if (!previewScene) {
 		previewRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
 		previewRenderer.setSize(300, 300);
+		previewRenderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 		
 		previewScene = new THREE.Scene();
 		previewCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
 		previewCamera.position.set(0, 30, 120);
 		previewCamera.lookAt(0, 0, 0);
 		
-		const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 4.0);
-		const dirLight = new THREE.DirectionalLight(0xffffff, 4.5);
+		const hemiLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 3.0);
+		const dirLight = new THREE.DirectionalLight(0xffffff, 3.5);
 		dirLight.position.set(150, 350, 350);
 		previewScene.add(hemiLight);
 		previewScene.add(dirLight);
