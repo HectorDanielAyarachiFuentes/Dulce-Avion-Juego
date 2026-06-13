@@ -28,6 +28,7 @@ export function createScene() {
 	});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.shadowMap.enabled = true;
+	renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
 	container = document.getElementById('world');
 	container.appendChild(renderer.domElement);

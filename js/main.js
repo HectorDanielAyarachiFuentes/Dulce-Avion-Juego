@@ -1,5 +1,6 @@
 import * as THREE from '../libs/three.module.min.js';
 window.THREE = THREE;
+THREE.ColorManagement.enabled = false;
 
 import { scene, camera, renderer, createScene } from './scene.js';
 import { createLights, ambientLight, hemisphereLight } from './lights.js';
@@ -632,8 +633,8 @@ function initPreview() {
 		previewCamera.position.set(0, 30, 120);
 		previewCamera.lookAt(0, 0, 0);
 		
-		const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
-		const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+		const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
+		const dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
 		dirLight.position.set(150, 350, 350);
 		previewScene.add(hemiLight);
 		previewScene.add(dirLight);
