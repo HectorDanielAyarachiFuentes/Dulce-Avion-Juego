@@ -377,14 +377,14 @@ function loop() {
 				if (HUD.showMiniFlash) HUD.showMiniFlash(0xffff00); // Amarillo para ametralladora
 			}
 			
-			machineGunHeat += 1.5;
+			machineGunHeat += 0.6;
 			if (machineGunHeat >= 100) {
 				machineGunHeat = 100;
 				isOverheated = true;
 				isShootingMG = false; // Fuerza detener el disparo
 			}
 		} else {
-			machineGunHeat -= 0.5;
+			machineGunHeat -= 0.6;
 			if (machineGunHeat <= 0) {
 				machineGunHeat = 0;
 				isOverheated = false;

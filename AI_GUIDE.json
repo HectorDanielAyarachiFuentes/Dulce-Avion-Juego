@@ -23,7 +23,8 @@
         "Lakes.js": "Lake scenery generator.",
         "Rocks.js": "Rock scenery generator.",
         "Grass.js": "Grass scenery generator.",
-        "Rain.js": "Weather effects (rain particles)."
+        "Rain.js": "Weather effects (rain particles).",
+        "Captive.js": "Captives (humans, animals) falling with parachutes."
       },
       "ui/": {
         "hud.js": "In-game HUD rendering logic (score, health, energy)."
