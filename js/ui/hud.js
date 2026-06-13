@@ -217,6 +217,24 @@ export const HUD = {
 		}
 	},
 	
+	showBossUI: function() {
+		const bossUI = document.getElementById('boss-ui');
+		if (bossUI) bossUI.classList.remove('hidden');
+	},
+	
+	hideBossUI: function() {
+		const bossUI = document.getElementById('boss-ui');
+		if (bossUI) bossUI.classList.add('hidden');
+	},
+	
+	updateBossHealth: function(current, max) {
+		const bar = document.getElementById('boss-health-bar');
+		if (bar) {
+			const percentage = Math.max(0, Math.min(100, (current / max) * 100));
+			bar.style.width = percentage + '%';
+		}
+	},
+	
 	updatePosition: function(aspectRatio) {
 		if (this.mesh) {
 			const zDist = 100;

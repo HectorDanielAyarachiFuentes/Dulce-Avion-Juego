@@ -22,8 +22,10 @@ import { EnemyManager } from './objects/Enemies.js';
 import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound, startPropellerSound, stopPropellerSound, setPropellerPitch } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 import { Rain } from './objects/Rain.js';
+import { Mothership } from './objects/Mothership.js';
+import { BackgroundBattle } from './objects/BackgroundBattle.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle;
 let mousePos = { x: 0, y: 0 };
 let isShootingMG = false;
 let mgTimer = 0;
@@ -47,6 +49,11 @@ function checkLevelUp() {
 		currentLevel = newLevel;
 		showLevelUpMessage();
 		updateEnvironmentColor();
+		
+		if (currentLevel === 4) {
+			mothership.startBossFight();
+			HUD.showBossUI();
+		}
 	}
 }
 
@@ -366,6 +373,14 @@ function resetGame() {
 	updateEnvironmentColor();
 	HUD.updateEnergy(energy);
 	HUD.updateScore(score);
+	
+	if (mothership) {
+		mothership.state = "creeping";
+		mothership.health = mothership.maxHealth;
+		mothership.mesh.position.set(-800, 800, -6000);
+		mothership.deathRay.material.opacity = 0;
+	}
+	HUD.hideBossUI();
 }
 
 function loop() {
@@ -556,6 +571,62 @@ function loop() {
 		weaponManager.update();
 		HUD.updatePosition(camera.aspect);
 		HUD.updateMiniPlane(airplane);
+		
+		// Update epic background
+		if (mothership) {
+			mothership.update(Date.now(), currentLevel);
+			if (mothership.state === "combat" || mothership.state === "intro") {
+				HUD.updateBossHealth(mothership.health, mothership.maxHealth);
+				
+				// Death Ray Collision (Instant Energy Drain!)
+				if (mothership.attackState === "deathray" && mothership.attackTimer > 100 && mothership.attackTimer < 250) {
+					// Extremely simplified: if player is roughly in center of screen
+					if (Math.abs(airplane.mesh.position.y - 100) < 60) {
+						energy -= 1.0;
+						HUD.updateEnergy(energy);
+						if (energy <= 0) resetGame();
+					}
+				}
+				
+				// Projectile collision with Boss
+				for (let i = weaponManager.projectiles.length - 1; i >= 0; i--) {
+					const proj = weaponManager.projectiles[i];
+					const dx = proj.mesh.position.x - mothership.mesh.position.x;
+					const dy = proj.mesh.position.y - mothership.mesh.position.y;
+					const dz = proj.mesh.position.z - mothership.mesh.position.z;
+					const distSq = dx*dx + dy*dy + dz*dz;
+					
+					// Hitbox is massive
+					if (distSq < mothership.hitboxRadiusSq) {
+						weaponManager.spawnSmoke(proj.mesh.position.x, proj.mesh.position.y, proj.mesh.position.z);
+						weaponManager.projectiles.splice(i, 1);
+						scene.remove(proj.mesh);
+						
+						mothership.health -= (proj.type === 'missile' ? 50 : 5);
+						
+						if (mothership.health <= 0 && mothership.state !== "dead") {
+							mothership.state = "dead";
+							bgBattle.triggerNuke(4); // Massive death explosion
+							score += 5000;
+							HUD.hideBossUI();
+							
+							// YOU WIN logic can be added here
+							const levelText = document.getElementById('level-text');
+							const levelSubtext = document.getElementById('level-subtext');
+							levelText.innerText = "¡VICTORIA!";
+							levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
+							document.getElementById('level-up-message').classList.remove('hidden');
+						}
+					}
+				}
+			}
+		}
+		if (bgBattle) {
+			bgBattle.update(Date.now(), ambientLight, currentLevel);
+			if (Math.random() < 0.0005) { // ~ once every 33 seconds at 60fps
+				bgBattle.triggerNuke(currentLevel);
+			}
+		}
 	}
 
 	renderer.render(scene, camera);
@@ -577,6 +648,11 @@ function init() {
 	createGrass();
 	createRocks();
 	createRain();
+	
+	mothership = new Mothership();
+	scene.add(mothership.mesh);
+	
+	bgBattle = new BackgroundBattle(scene);
 	
 	weaponManager = new WeaponManager(scene);
 	enemyManager = new EnemyManager(scene);

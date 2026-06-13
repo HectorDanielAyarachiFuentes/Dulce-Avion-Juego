@@ -3,7 +3,7 @@
  */
 import { Colors } from '../utils/colors.js';
 
-export const Mountain = function() {
+export const Mountain = function(isDistant = false) {
 	this.mesh = new THREE.Object3D();
 	
 	// Create a rugged shape for a low-poly mountain
@@ -44,13 +44,29 @@ export const Mountain = function() {
 
 	const mat = new THREE.MeshPhongMaterial({
 		color: Colors.brownDark,
-		flatShading: true
+		flatShading: true,
+		fog: !isDistant
 	});
 	
 	const mesh = new THREE.Mesh(geom, mat);
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	
+	// Add snowy peak
+	const snowGeom = new THREE.ConeGeometry(8, 15, 8);
+	// We make it irregular too
+	const snowPos = snowGeom.attributes.position;
+	for (let i = 0; i < snowPos.count; i++) {
+		if (snowPos.getY(i) < 5) {
+			snowPos.setXYZ(i, snowPos.getX(i) + (Math.random()-0.5)*3, snowPos.getY(i) + (Math.random()-0.5)*3, snowPos.getZ(i) + (Math.random()-0.5)*3);
+		}
+	}
+	snowGeom.computeVertexNormals();
+	const snowMat = new THREE.MeshPhongMaterial({ color: Colors.white, flatShading: true, fog: !isDistant });
+	const snow = new THREE.Mesh(snowGeom, snowMat);
+	snow.position.y = 25; // Peak of the mountain
+	mesh.add(snow);
+
 	// Shift geometry so the origin is at the base of the mountain instead of the center
 	geom.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 30, 0));
 	
@@ -82,6 +98,29 @@ export const Mountains = function() {
 		m.mesh.position.z = -500 + Math.random()*1000;
 		
 		const s = 1 + Math.random()*3;
+		m.mesh.scale.set(s,s,s);
+		
+		this.mesh.add(m.mesh);
+	}
+	
+	// Distant massive mountains for epic background
+	this.nDistantMountains = 15;
+	const distantStep = Math.PI * 2 / this.nDistantMountains;
+	
+	for(let i=0; i<this.nDistantMountains; i++) {
+		const m = new Mountain(true); // isDistant = true
+		const a = distantStep*i + (Math.random() - 0.5);
+		const h = 2960; // Similar base height
+		
+		m.mesh.position.y = Math.sin(a)*h;
+		m.mesh.position.x = Math.cos(a)*h;
+		m.mesh.rotation.z = a - Math.PI/2;
+		
+		// Far, far away in the background
+		m.mesh.position.z = -1500 - Math.random()*1000;
+		
+		// Massive scale
+		const s = 6 + Math.random()*6;
 		m.mesh.scale.set(s,s,s);
 		
 		this.mesh.add(m.mesh);

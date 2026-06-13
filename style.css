@@ -308,3 +308,47 @@ body.playing {
 	font-family: 'Terminal', sans-serif;
 	cursor: pointer;
 }
+
+/* BOSS UI */
+#boss-ui {
+	position: absolute;
+	top: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 60%;
+	text-align: center;
+	z-index: 100;
+	transition: opacity 1s ease;
+	font-family: 'Terminal', sans-serif;
+}
+
+#boss-ui.hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
+#boss-name {
+	font-size: 24px;
+	color: #f25346;
+	text-shadow: 2px 2px 0px #23190f;
+	letter-spacing: 4px;
+	margin-bottom: 5px;
+	text-transform: uppercase;
+}
+
+.boss-health-bg {
+	width: 100%;
+	height: 20px;
+	background: #23190f;
+	border: 4px solid #59332e;
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+#boss-health-bar {
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(90deg, #ff0000, #ff8800);
+	transition: width 0.2s ease-out;
+}

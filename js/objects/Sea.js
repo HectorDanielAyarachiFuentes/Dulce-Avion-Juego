@@ -5,7 +5,7 @@ import { Colors } from '../utils/colors.js';
 
 export const Sea = function () {
 	// Cilindro GIGANTE para simular un suelo plano e infinito (Mario style)
-	let geom = new THREE.CylinderGeometry(3000, 3000, 1200, 80, 10);
+	let geom = new THREE.CylinderGeometry(3000, 3000, 4000, 80, 10);
 	geom.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI/2));
 	geom = geom.toNonIndexed();
 
