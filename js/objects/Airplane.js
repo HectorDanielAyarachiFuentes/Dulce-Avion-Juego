@@ -106,9 +106,49 @@ export const Pilot = function () {
 	this.scarfTail.add(scarfTailMesh);
 	this.scarfTail.position.set(-5, -6, 4); // Sale de un lado del cuello
 	this.mesh.add(this.scarfTail);
+	
+	// Brazo derecho (para la radio)
+	this.rightArm = new THREE.Object3D();
+	const armGeom = new THREE.BoxGeometry(4, 12, 4);
+	const armMat = new THREE.MeshPhongMaterial({ color: Colors.brown, flatShading: true });
+	const armMesh = new THREE.Mesh(armGeom, armMat);
+	armMesh.position.set(0, -6, 0); // Pivote en el hombro
+	this.rightArm.add(armMesh);
+	this.rightArm.position.set(8, -4, 8); // Posición del hombro derecho
+	this.mesh.add(this.rightArm);
+	
+	// Aura de motivación (Fuego)
+	const auraGeom = new THREE.SphereGeometry(18, 8, 8);
+	this.auraMat = new THREE.MeshBasicMaterial({ color: 0xff4500, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+	this.aura = new THREE.Mesh(auraGeom, this.auraMat);
+	this.aura.position.set(0, 0, 0);
+	this.mesh.add(this.aura);
 };
 
-Pilot.prototype.updateHairs = function () {
+Pilot.prototype.update = function (isSearchingRadio, showMotivationAura) {
+	// Animación de buscar la radio
+	if (isSearchingRadio) {
+		this.mesh.rotation.x = 0.5; // Se inclina hacia adelante
+		this.mesh.rotation.y = -0.3; // Mira hacia abajo a la derecha
+		this.rightArm.rotation.x = -1.5; // Estira el brazo hacia adelante/abajo
+		this.rightArm.rotation.z = 0.2;
+	} else {
+		// Vuelve a su posición normal suavemente
+		this.mesh.rotation.x += (0 - this.mesh.rotation.x) * 0.1;
+		this.mesh.rotation.y += (0 - this.mesh.rotation.y) * 0.1;
+		this.rightArm.rotation.x += (0 - this.rightArm.rotation.x) * 0.1;
+		this.rightArm.rotation.z += (0 - this.rightArm.rotation.z) * 0.1;
+	}
+	
+	// Aura de fuego / motivación
+	if (showMotivationAura) {
+		this.auraMat.opacity = 0.5 + Math.sin(this.angleHairs * 5) * 0.2;
+		this.aura.scale.setScalar(1 + Math.sin(this.angleHairs * 3) * 0.1);
+		this.aura.rotation.y += 0.1;
+		this.aura.rotation.z += 0.05;
+	} else {
+		this.auraMat.opacity = 0;
+	}
 	// Mechones moviéndose
 	const hairs = this.hairsTop.children;
 	for (let i = 0; i < hairs.length; i++) {

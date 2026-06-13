@@ -312,7 +312,7 @@ body.playing {
 /* BOSS UI */
 #boss-ui {
 	position: absolute;
-	top: 80px;
+	bottom: 40px;
 	left: 50%;
 	transform: translateX(-50%);
 	width: 60%;

@@ -17,7 +17,11 @@ export function setMusicMuted(muted) {
 	isMusicMuted = muted;
 	if (masterMusicGain) {
 		masterMusicGain.gain.cancelScheduledValues(audioCtx ? audioCtx.currentTime : 0);
-		masterMusicGain.gain.value = muted ? 0 : 0.6;
+		masterMusicGain.gain.value = muted ? 0 : 0.8;
+	}
+	const salsa = document.getElementById('salsa-audio');
+	if (salsa) {
+		salsa.volume = muted ? 0 : 1.0;
 	}
 }
 
@@ -25,7 +29,7 @@ export function setSfxMuted(muted) {
 	isSfxMuted = muted;
 	if (masterSfxGain) {
 		masterSfxGain.gain.cancelScheduledValues(audioCtx ? audioCtx.currentTime : 0);
-		masterSfxGain.gain.value = muted ? 0 : 1.0;
+		masterSfxGain.gain.value = muted ? 0 : 0.4;
 	}
 }
 
@@ -40,11 +44,11 @@ export function initAudio() {
 		audioCtx = new AudioContext();
 		
 		masterMusicGain = audioCtx.createGain();
-		masterMusicGain.gain.value = isMusicMuted ? 0 : 0.6;
+		masterMusicGain.gain.value = isMusicMuted ? 0 : 0.8;
 		masterMusicGain.connect(audioCtx.destination);
 		
 		masterSfxGain = audioCtx.createGain();
-		masterSfxGain.gain.value = isSfxMuted ? 0 : 1.0;
+		masterSfxGain.gain.value = isSfxMuted ? 0 : 0.4;
 		masterSfxGain.connect(audioCtx.destination);
 	}
 }
@@ -208,6 +212,71 @@ export function playRescueSound() {
 	gain.connect(masterSfxGain);
 	osc.start(now);
 	osc.stop(now + 0.5);
+}
+
+export function stopEpicSong() {
+	if (currentSchedulerTimer) {
+		clearTimeout(currentSchedulerTimer);
+		currentSchedulerTimer = null;
+	}
+}
+
+export function playRadioTuningSound() {
+	if (!audioCtx || isSfxMuted) return;
+	const now = audioCtx.currentTime;
+	
+	const noise = audioCtx.createBufferSource();
+	noise.buffer = getNoiseBuffer();
+	
+	const noiseFilter = audioCtx.createBiquadFilter();
+	noiseFilter.type = 'bandpass';
+	// Sweep frequency to simulate tuning a dial
+	noiseFilter.frequency.setValueAtTime(400, now);
+	noiseFilter.frequency.linearRampToValueAtTime(3000, now + 1.0);
+	noiseFilter.frequency.linearRampToValueAtTime(800, now + 2.0);
+	noiseFilter.Q.value = 5.0; // High resonance for sharp static whine
+	
+	const noiseGain = audioCtx.createGain();
+	noiseGain.gain.setValueAtTime(0, now);
+	noiseGain.gain.linearRampToValueAtTime(0.5, now + 0.2); // Fade in static
+	noiseGain.gain.setValueAtTime(0.5, now + 1.8);
+	noiseGain.gain.linearRampToValueAtTime(0, now + 2.0); // Fade out static
+	
+	noise.connect(noiseFilter);
+	noiseFilter.connect(noiseGain);
+	noiseGain.connect(masterSfxGain);
+	
+	noise.start(now);
+	noise.stop(now + 2.0);
+}
+
+export function playSalsaSong() {
+	stopEpicSong(); // Stop procedural music
+	const salsa = document.getElementById('salsa-audio');
+	if (salsa) {
+		salsa.volume = 0; // Empieza en 0 para el fade in
+		salsa.play().catch(e => console.log('Salsa autoplay blocked:', e));
+		
+		const targetVol = isMusicMuted ? 0 : 1.0;
+		let currentVol = 0;
+		// Fade in durante 3 segundos
+		const fadeInterval = setInterval(() => {
+			currentVol += 0.05;
+			if (currentVol >= targetVol) {
+				currentVol = targetVol;
+				clearInterval(fadeInterval);
+			}
+			salsa.volume = currentVol;
+		}, 150); // 150ms * 20 = 3000ms = 3 segundos
+	}
+}
+
+export function stopSalsaSong() {
+	const salsa = document.getElementById('salsa-audio');
+	if (salsa) {
+		salsa.pause();
+		salsa.currentTime = 0;
+	}
 }
 
 // BSO: Secuenciador Procedural Avanzado (7 Canciones)

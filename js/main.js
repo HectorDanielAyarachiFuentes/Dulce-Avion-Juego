@@ -19,7 +19,7 @@ import { Grass } from './objects/Grass.js';
 import { Rocks } from './objects/Rocks.js';
 import { WeaponManager } from './objects/Weapons.js';
 import { EnemyManager } from './objects/Enemies.js';
-import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound, startPropellerSound, stopPropellerSound, setPropellerPitch } from './utils/audio.js';
+import { initAudio, playShootSound, playMachineGunSound, playEpicSong, setMusicMuted, setSfxMuted, setSongId, playAlienLaserSound, playExplosionSound, playRescueSound, playThunderSound, startRainSound, stopRainSound, startPropellerSound, stopPropellerSound, setPropellerPitch, playSalsaSong, stopSalsaSong, playRadioTuningSound } from './utils/audio.js';
 import { HUD } from './ui/hud.js';
 import { Rain } from './objects/Rain.js';
 import { Mothership } from './objects/Mothership.js';
@@ -56,8 +56,27 @@ function checkLevelUp() {
 		
 		if (currentLevel === 5) {
 			targetWorldY = -8000; // El mundo se hunde para simular vuelo a gran altitud
-			mothership.startBossFight();
-			HUD.showBossUI();
+			
+			// 1. Animación de buscar radio y sonido de sintonía
+			airplane.isSearchingRadio = true;
+			playRadioTuningSound();
+			
+			// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
+			setTimeout(() => {
+				if (gameState !== 'welcome' && currentLevel === 5) {
+					airplane.isSearchingRadio = false;
+					airplane.showMotivationAura = true;
+					playSalsaSong();
+					
+					// 3. A los 3 segundos (cuando la salsa ya se oye fuerte), llega la nave nodriza
+					setTimeout(() => {
+						if (gameState !== 'welcome' && currentLevel === 5) {
+							if (mothership) mothership.startBossFight();
+							HUD.showBossUI();
+						}
+					}, 3000);
+				}
+			}, 2000);
 		}
 	}
 }
@@ -402,8 +421,29 @@ function resetGame() {
 	// Si iniciamos directamente en el Nivel 5, lanzar la transición al Jefe
 	if (currentLevel === 5) {
 		targetWorldY = -8000;
-		if (mothership) mothership.startBossFight();
-		HUD.showBossUI();
+		
+		// 1. Animación de buscar radio y sonido de sintonía
+		airplane.isSearchingRadio = true;
+		playRadioTuningSound();
+		
+		// 2. A los 2 segundos, encuentra la radio, arranca la salsa (fade in) y el fuego interior
+		setTimeout(() => {
+			if (gameState !== 'welcome' && currentLevel === 5) {
+				airplane.isSearchingRadio = false;
+				airplane.showMotivationAura = true;
+				playSalsaSong();
+				
+				// 3. A los 3 segundos (cuando la salsa ya se oye fuerte), llega la nave nodriza
+				setTimeout(() => {
+					if (gameState !== 'welcome' && currentLevel === 5) {
+						if (mothership) mothership.startBossFight();
+						HUD.showBossUI();
+					}
+				}, 3000);
+			}
+		}, 2000);
+	} else {
+		stopSalsaSong();
 	}
 }
 
@@ -451,7 +491,7 @@ function loop() {
 	}
 
 	if (gameState === 'playing') {
-		airplane.pilot.updateHairs();
+		airplane.pilot.update(airplane.isSearchingRadio, airplane.showMotivationAura);
 		sea.moveWaves(); 
 		if (rain) rain.update();
 		updatePlane();
