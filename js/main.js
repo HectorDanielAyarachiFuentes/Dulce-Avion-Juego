@@ -1,3 +1,6 @@
+import * as THREE from '../libs/three.module.min.js';
+window.THREE = THREE;
+
 import { scene, camera, renderer, createScene } from './scene.js';
 import { createLights, ambientLight, hemisphereLight } from './lights.js';
 import { normalize } from './utils/math.js';
