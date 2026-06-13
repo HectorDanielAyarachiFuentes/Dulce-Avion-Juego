@@ -34,14 +34,61 @@ export const Mothership = function() {
 	this.engineLight = new THREE.Mesh(engineLightGeom, engineLightMat);
 	this.engineLight.position.y = -30;
 
+	// Antena superior
+	const antennaBaseGeom = new THREE.CylinderGeometry(5, 5, 20, 8);
+	const antennaBaseMat = new THREE.MeshPhongMaterial({ color: 0x555555, flatShading: true });
+	const antennaBase = new THREE.Mesh(antennaBaseGeom, antennaBaseMat);
+	antennaBase.position.y = 100;
+	dome.add(antennaBase);
+	
+	const antennaGeom = new THREE.CylinderGeometry(1, 1, 50, 4);
+	const antennaMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+	const antenna = new THREE.Mesh(antennaGeom, antennaMat);
+	antenna.position.y = 125;
+	dome.add(antenna);
+	
+	const antennaBulbGeom = new THREE.SphereGeometry(6, 8, 8);
+	const antennaBulbMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+	this.antennaBulb = new THREE.Mesh(antennaBulbGeom, antennaBulbMat);
+	this.antennaBulb.position.y = 150;
+	dome.add(this.antennaBulb);
+
+	// Ventanas / Ojos de buey (Portholes) alrededor del plato
+	const portholeGeom = new THREE.SphereGeometry(10, 8, 8);
+	const portholeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+	this.portholes = [];
+	for (let i = 0; i < 16; i++) {
+		const angle = (i / 16) * Math.PI * 2;
+		const porthole = new THREE.Mesh(portholeGeom, portholeMat);
+		// Posicionar en el borde del platillo (radio 200)
+		porthole.position.set(Math.cos(angle) * 195, 0, Math.sin(angle) * 195);
+		// Achatar para que parezca una ventana ovalada en el borde
+		porthole.scale.set(1, 0.5, 1);
+		saucer.add(porthole);
+		this.portholes.push(porthole);
+	}
+
+	// Cañones laterales apuntando hacia adelante (izquierda, -X)
+	const cannonGeom = new THREE.CylinderGeometry(8, 6, 60, 8);
+	cannonGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2)); // Apuntar a lo largo de X
+	const cannonMat = new THREE.MeshPhongMaterial({ color: 0x333333, flatShading: true });
+	
+	const cannon1 = new THREE.Mesh(cannonGeom, cannonMat);
+	cannon1.position.set(-180, -10, 50); // Lado izquierdo, un poco hacia atrás
+	saucer.add(cannon1);
+	
+	const cannon2 = new THREE.Mesh(cannonGeom, cannonMat);
+	cannon2.position.set(-180, -10, -50); 
+	saucer.add(cannon2);
+
 	this.mesh.add(saucer);
 	this.mesh.add(dome);
 	this.mesh.add(this.ring);
 	this.mesh.add(engine);
 	this.mesh.add(this.engineLight);
 	
-	// Scale massive but fits on screen
-	this.mesh.scale.set(1.5, 1.5, 1.5);
+	// Scale massive but fits on screen better
+	this.mesh.scale.set(1.2, 1.2, 1.2);
 	
 	// Posición distante en el fondo
 	this.mesh.position.set(-800, 800, -6000); // Start very far away
@@ -90,8 +137,8 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 	} 
 	else if (this.state === "intro") {
 		this.introTimer++;
-		// Acelera hacia el lado derecho de la pantalla
-		this.mesh.position.x += (250 - this.mesh.position.x) * 0.05; 
+		// Acelera hacia el lado derecho de la pantalla (más lejos)
+		this.mesh.position.x += (350 - this.mesh.position.x) * 0.05; 
 		this.mesh.position.y += (100 - this.mesh.position.y) * 0.05; 
 		this.mesh.position.z += (-50 - this.mesh.position.z) * 0.05;
 		
@@ -106,14 +153,13 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 			this.state = "combat";
 			this.attackState = "idle";
 			this.attackTimer = 0;
-			this.health = this.maxHealth;
 		}
 	}
 	else if (this.state === "combat") {
 		this.attackTimer++;
 		// Movimiento vertical de jefe clásico
 		this.mesh.position.y = 100 + Math.sin(time * 0.002) * 80;
-		this.mesh.position.x = 250 + Math.sin(time * 0.001) * 30; // Hover leve en X
+		this.mesh.position.x = 350 + Math.sin(time * 0.001) * 30; // Hover leve en X
 		
 		// Mantenerlo inclinado ominosamente
 		this.mesh.rotation.z = -0.2;
@@ -125,6 +171,15 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		else this.combatPhase = 3;
 		
 		// Comportamiento de ataques
+		// Animaciones constantes de los detalles
+		if (this.antennaBulb) {
+			this.antennaBulb.material.color.setHSL((time * 0.001) % 1, 1, 0.5);
+			this.antennaBulb.scale.setScalar(1 + Math.sin(time * 0.01) * 0.2);
+		}
+		for (let i = 0; i < this.portholes.length; i++) {
+			this.portholes[i].material.color.setHSL((time * 0.0005 + i * 0.1) % 1, 0.8, 0.5);
+		}
+		
 		if (this.attackState === "idle") {
 			this.mesh.rotation.x *= 0.95;
 			this.ring.rotation.z -= 0.02;

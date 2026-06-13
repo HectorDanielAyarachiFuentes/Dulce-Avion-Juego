@@ -127,6 +127,7 @@ export const MissileProjectile = function(x, y, z) {
 	
 	this.speed = 6; // Velocidad reducida para apreciar la estela
 	this.active = true;
+	this.type = 'missile';
 };
 
 MissileProjectile.prototype.update = function() {
@@ -149,6 +150,7 @@ export const MachineGunProjectile = function(x, y, z) {
 	
 	this.speed = 30; // Más veloz
 	this.active = true;
+	this.type = 'bullet';
 };
 
 MachineGunProjectile.prototype.update = function() {

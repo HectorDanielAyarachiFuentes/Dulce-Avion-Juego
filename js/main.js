@@ -398,6 +398,13 @@ function resetGame() {
 		mothership.deathRay.material.opacity = 0;
 	}
 	HUD.hideBossUI();
+	
+	// Si iniciamos directamente en el Nivel 5, lanzar la transición al Jefe
+	if (currentLevel === 5) {
+		targetWorldY = -8000;
+		if (mothership) mothership.startBossFight();
+		HUD.showBossUI();
+	}
 }
 
 function loop() {
@@ -638,12 +645,18 @@ function loop() {
 							score += 5000;
 							HUD.hideBossUI();
 							
-							// YOU WIN logic can be added here
+							// YOU WIN logic
 							const levelText = document.getElementById('level-text');
 							const levelSubtext = document.getElementById('level-subtext');
 							levelText.innerText = "¡VICTORIA!";
 							levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
 							document.getElementById('level-up-message').classList.remove('hidden');
+							
+							setTimeout(() => {
+								document.getElementById('level-up-message').classList.add('hidden');
+								document.getElementById('credits-screen').classList.remove('hidden');
+								gameState = 'gameover'; // Detiene la interacción normal
+							}, 3000);
 						}
 					}
 				}
@@ -710,6 +723,21 @@ function init() {
 		playEpicSong(); // Esto iniciará el loop procedural
 		startPropellerSound(); // Inicia el zumbido de la avioneta
 	});
+	
+	const restartBtn = document.getElementById('restart-btn');
+	if (restartBtn) {
+		restartBtn.addEventListener('click', () => {
+			// Volver al menú de forma suave sin recargar
+			document.getElementById('credits-screen').classList.add('hidden');
+			welcomeScreen.classList.remove('hidden');
+			gameState = 'menu';
+			document.body.classList.remove('playing');
+			
+			// Limpiar los enemigos y proyectiles
+			enemyManager.reset();
+			weaponManager.projectiles = [];
+		});
+	}
 	
 	closeSettingsBtn.addEventListener('click', () => {
 		settingsModal.classList.add('hidden');
