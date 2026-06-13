@@ -24,7 +24,9 @@
         "Rocks.js": "Rock scenery generator.",
         "Grass.js": "Grass scenery generator.",
         "Rain.js": "Weather effects (rain particles).",
-        "Captive.js": "Captives (humans, animals) falling with parachutes."
+        "Captive.js": "Captives (humans, animals) falling with parachutes.",
+        "Mothership.js": "Boss enemy mothership with 5000 HP, multiple attack phases, and death ray.",
+        "VictoryScene.js": "3D victory scene with parked airplane, dancing pilot, Dulce the dog, banner plane, trees, flowers, butterflies."
       },
       "ui/": {
         "hud.js": "In-game HUD rendering logic (score, health, energy)."

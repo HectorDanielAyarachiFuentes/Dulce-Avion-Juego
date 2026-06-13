@@ -393,5 +393,15 @@ export const HUD = {
 		icon.add(tip);
 		icon.scale.set(0.9, 0.9, 0.9);
 		return icon;
+	},
+	
+	hide: function() {
+		if (this.mesh) this.mesh.visible = false;
+		const bossBar = document.getElementById('boss-health-container');
+		if (bossBar) bossBar.style.display = 'none';
+	},
+	
+	show: function() {
+		if (this.mesh) this.mesh.visible = true;
 	}
 };

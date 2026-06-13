@@ -402,3 +402,18 @@ EnemyManager.prototype.releaseCaptive = function(ufo) {
 	}
 	return false;
 };
+
+EnemyManager.prototype.reset = function() {
+	for (let ufo of this.ufos) this.scene.remove(ufo.mesh);
+	for (let laser of this.lasers) this.scene.remove(laser.mesh);
+	for (let bomb of this.bombs) this.scene.remove(bomb.mesh);
+	for (let cap of this.fallingCaptives) this.scene.remove(cap.mesh);
+	
+	this.ufos = [];
+	this.lasers = [];
+	this.bombs = [];
+	this.fallingCaptives = [];
+	this.spawnTimer = 0;
+	this.combatState = 'intro';
+	this.stateTimer = 0;
+};

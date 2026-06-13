@@ -24,8 +24,9 @@ import { HUD } from './ui/hud.js';
 import { Rain } from './objects/Rain.js';
 import { Mothership } from './objects/Mothership.js';
 import { BackgroundBattle } from './objects/BackgroundBattle.js';
+import { VictoryScene } from './objects/VictoryScene.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle, victoryScene;
 let mousePos = { x: 0, y: 0 };
 
 let currentWorldY = -3000;
@@ -104,6 +105,50 @@ function checkLevelUp() {
 			startLevel5Sequence();
 		}
 	}
+}
+
+function triggerVictory() {
+	// YOU WIN logic
+	gameState = 'victory'; // Halt main game loop immediately!
+	
+	const levelText = document.getElementById('level-text');
+	const levelSubtext = document.getElementById('level-subtext');
+	levelText.innerText = "¡VICTORIA!";
+	levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
+	document.getElementById('level-up-message').classList.remove('hidden');
+	
+	// Activar escena 3D de victoria inmediatamente
+	if (victoryScene) {
+		victoryScene.activate();
+		
+		// Stop the world from moving
+		gameSpeed = 0;
+		targetGameSpeed = 0;
+		
+		// Ocultar avión jugador, HUD y jefe
+		airplane.mesh.visible = false;
+		if (mothership) mothership.mesh.visible = false;
+		HUD.hide();
+		
+		// Destruir todos los aliens y proyectiles
+		if (enemyManager) enemyManager.reset();
+		if (weaponManager) weaponManager.projectiles = [];
+		
+		// Restaurar colores y luces del nivel 1 (Día)
+		currentLevel = 1;
+		updateEnvironmentColor();
+		
+		// Cámara mirando la escena de victoria (un poco más cerca y abajo para ver bien el suelo)
+		camera.position.set(100, 60, 120);
+		camera.lookAt(10, 20, 0);
+	}
+	
+	setTimeout(() => {
+		document.getElementById('level-up-message').classList.add('hidden');
+		// Mostrar botón de volver al menú como overlay y scrollear créditos
+		document.getElementById('credits-screen').classList.remove('hidden');
+		gameState = 'gameover'; // Final state
+	}, 3000);
 }
 
 function showLevelUpMessage() {
@@ -700,18 +745,7 @@ function loop() {
 							score += 5000;
 							HUD.hideBossUI();
 							
-							// YOU WIN logic
-							const levelText = document.getElementById('level-text');
-							const levelSubtext = document.getElementById('level-subtext');
-							levelText.innerText = "¡VICTORIA!";
-							levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
-							document.getElementById('level-up-message').classList.remove('hidden');
-							
-							setTimeout(() => {
-								document.getElementById('level-up-message').classList.add('hidden');
-								document.getElementById('credits-screen').classList.remove('hidden');
-								gameState = 'gameover'; // Detiene la interacción normal
-							}, 3000);
+							triggerVictory();
 						}
 					}
 				}
@@ -724,6 +758,9 @@ function loop() {
 			}
 		}
 	}
+	
+	// Actualizar escena de victoria
+	if (victoryScene) victoryScene.update();
 
 	renderer.render(scene, camera);
 	requestAnimationFrame(loop);
@@ -749,6 +786,9 @@ function init() {
 	scene.add(mothership.mesh);
 	
 	bgBattle = new BackgroundBattle(scene);
+	
+	victoryScene = new VictoryScene(scene);
+	scene.add(victoryScene.mesh);
 	
 	weaponManager = new WeaponManager(scene);
 	enemyManager = new EnemyManager(scene);
@@ -779,6 +819,21 @@ function init() {
 		startPropellerSound(); // Inicia el zumbido de la avioneta
 	});
 	
+	const testVictoryBtn = document.getElementById('test-victory-btn');
+	if (testVictoryBtn) {
+		testVictoryBtn.addEventListener('click', () => {
+			welcomeScreen.classList.add('hidden');
+			gameState = 'playing';
+			document.body.classList.add('playing');
+			resetGame();
+			
+			// Simulate killing the boss
+			currentLevel = 5;
+			if (mothership) mothership.health = 0;
+			triggerVictory();
+		});
+	}
+	
 	const restartBtn = document.getElementById('restart-btn');
 	if (restartBtn) {
 		restartBtn.addEventListener('click', () => {
@@ -788,9 +843,40 @@ function init() {
 			gameState = 'menu';
 			document.body.classList.remove('playing');
 			
+			// Desactivar escena de victoria y restaurar objetos del juego
+			if (victoryScene) victoryScene.deactivate();
+			airplane.mesh.visible = true;
+			sea.mesh.visible = true;
+			mountains.mesh.visible = true;
+			sky.mesh.visible = true;
+			if (lakes) lakes.mesh.visible = true;
+			if (forest) forest.mesh.visible = true;
+			if (eagle) eagle.mesh.visible = true;
+			if (grass) grass.mesh.visible = true;
+			if (rocks) rocks.mesh.visible = true;
+			if (rain) rain.mesh.visible = true;
+			mothership.mesh.visible = true;
+			if (bgBattle) bgBattle.mesh.visible = true;
+			HUD.show();
+			
+			// Restaurar cámara
+			camera.position.set(0, 100, 200);
+			camera.lookAt(0, 0, 0);
+			
+			// Restaurar cielo del menú (nivel 1)
+			const aviator = document.querySelector('.aviator');
+			aviator.style.background = 'linear-gradient(#3b5764, #739aaf)';
+			
 			// Limpiar los enemigos y proyectiles
 			enemyManager.reset();
 			weaponManager.projectiles = [];
+			
+			// Parar la música de salsa
+			stopSalsaSong();
+			if (airplane) {
+				airplane.isSearchingRadio = false;
+				airplane.showMotivationAura = false;
+			}
 		});
 	}
 	

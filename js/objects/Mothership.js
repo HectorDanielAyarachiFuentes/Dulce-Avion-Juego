@@ -98,8 +98,8 @@ export const Mothership = function() {
 	this.mesh.rotation.z = -0.1;
 	
 	// Boss Mechanics
-	this.health = 1500;
-	this.maxHealth = 1500;
+	this.health = 5000;
+	this.maxHealth = 5000;
 	this.state = "creeping"; // creeping, intro, combat, dead
 	this.introTimer = 0;
 	this.combatPhase = 0;

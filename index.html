@@ -43,6 +43,7 @@
                 </select>
             </div>
             <button id="start-btn">START ENGINE</button>
+            <button id="test-victory-btn" style="margin-top: 15px; padding: 10px 20px; background: linear-gradient(#88c070, #5a9c40); color: white; border: 2px solid white; border-radius: 50px; font-family: 'Fredoka One', cursive; cursor: pointer; text-shadow: 1px 1px 0px rgba(0,0,0,0.5);">TEST VICTORY SCENE</button>
         </div>
     </div>
     
@@ -121,20 +122,30 @@
         </div>
     </div>
 
-    <!-- PANTALLA DE CRÉDITOS (VICTORIA) -->
+    <!-- PANTALLA DE CRÉDITOS (VICTORIA 3D) -->
     <div id="credits-screen" class="hidden">
-        <div class="credits-board">
-            <h1>¡VICTORIA ÉPICA!</h1>
-            <h2>La Tierra está a Salvo</h2>
-            
-            <div class="credits-list">
+        <div class="credits-overlay">
+            <div class="credits-scroll">
+                <h1>¡VICTORIA ÉPICA!</h1>
+                <h2>🌎 La Tierra está a Salvo 🌎</h2>
+                <div class="credits-divider"></div>
                 <h3>CRÉDITOS</h3>
-                <p><strong>Piloto y Creador:</strong> Ramoncito</p>
-                <p><strong>Asistente IA:</strong> Gemini (Antigravity IDE)</p>
-                <p><strong>Mascota Oficial:</strong> Dulce (🐶 ¡Guau!)</p>
+                <p class="credit-role">Piloto y Creador</p>
+                <p class="credit-name">Ramoncito ✈️</p>
+                <p class="credit-role">Asistente IA</p>
+                <p class="credit-name">Claude Opus (Antigravity IDE) 🤖</p>
+                <p class="credit-role">Mascota Oficial</p>
+                <p class="credit-name">Dulce 🐶 ¡Guau!</p>
+                <div class="credits-divider"></div>
+                <p class="credit-role">Motor Gráfico</p>
+                <p class="credit-name">Three.js</p>
+                <p class="credit-role">Banda Sonora Épica</p>
+                <p class="credit-name">Marc Anthony - Ahora Quién 🎶</p>
+                <div class="credits-divider"></div>
+                <p class="credit-thanks">Gracias por jugar</p>
+                <p class="credit-thanks">🛩️ DULCE AVIÓN 3D 🛩️</p>
             </div>
-            
-            <button id="restart-btn" class="menu-btn">VOLVER AL MENÚ</button>
+            <button id="restart-btn" class="victory-btn">🏠 VOLVER AL MENÚ</button>
         </div>
     </div>
 
