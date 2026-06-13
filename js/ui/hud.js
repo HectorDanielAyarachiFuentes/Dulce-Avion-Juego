@@ -263,6 +263,15 @@ export const HUD = {
 		this.mesh.add(bg);
 
 		this.miniPlane = miniMesh;
+		
+		// Desactivar sombras para el avión miniatura (evita sombra gigante en el suelo)
+		this.miniPlane.traverse(function(child) {
+			if (child.isMesh) {
+				child.castShadow = false;
+				child.receiveShadow = false;
+			}
+		});
+
 		this.miniPlane.scale.set(0.12, 0.12, 0.12);
 		this.miniPlane.position.set(33, -1, 6); // Destacar desde el fondo
 		

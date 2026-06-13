@@ -225,10 +225,10 @@ export function playEpicSong() {
 			chords: [[110.00, 220.00, 164.81], [87.31, 174.61, 130.81], [130.81, 261.63, 196.00], [98.00, 196.00, 146.83]],
 			style: 'epic'
 		},
-		1: { // 2. Lamento de la Puna (Andina Triste 1)
-			bpm: 65,
-			chords: [[110.00, 130.81, 164.81], [98.00, 146.83, 196.00], [110.00, 130.81, 164.81], [82.41, 110.00, 164.81]], // Escala pentatónica menor (Am)
-			style: 'sad_andina_lamento'
+		1: { // 2. El Cóndor Pasa (Versión Quena Completa)
+			bpm: 100,
+			chords: [[0,0,0]], // Usamos lógica dinámica matemática de 44 compases
+			style: 'el_condor_pasa'
 		},
 		2: { // 3. Vuelo Solitario (Andina Triste 2)
 			bpm: 70,
@@ -326,9 +326,10 @@ export function playEpicSong() {
 	}
 
 	function scheduleMeasure(startTime, measureIndex) {
-		const chordIndex = measureIndex % 4;
-		const chord = currentSong.chords[chordIndex];
-		const rootFreq = chord[0];
+		const numChords = currentSong.chords.length || 1;
+		const chordIndex = measureIndex % numChords;
+		const chord = currentSong.chords[chordIndex] || [0, 0, 0];
+		const rootFreq = chord[0] || 0;
 		
 		const isIntro = measureIndex < 8;
 		const isDev = measureIndex >= 8 && measureIndex < 16;
@@ -354,48 +355,122 @@ export function playEpicSong() {
 				for (let i=0; i<16; i++) playDrum('hat', startTime + i * (beatDuration/4));
 			}
 			
-		} else if (currentSong.style === 'sad_andina_lamento') {
-			// LAMENTO DE LA PUNA (Intro Triste -> Desarrollo Melancólico -> Final "Triste pero Alegre")
-			const isEnd = measureIndex >= 16;
+		} else if (currentSong.style === 'el_condor_pasa') {
+			const m = measureIndex % 44; // Ciclo exacto de 44 compases según notas de Quena
 			
-			// En el final forzamos acordes mayores (C Mayor y Fa Mayor) para darle ese toque "esperanzador y alegre" dentro de la tristeza
-			let playChord = chord;
-			let playRoot = rootFreq;
-			if (isEnd) {
-				const happyEndingChords = [[130.81, 164.81, 196.00], [98.00, 146.83, 196.00], [87.31, 130.81, 174.61], [130.81, 164.81, 196.00]]; // C, G, F, C
-				playChord = happyEndingChords[chordIndex];
-				playRoot = playChord[0];
+			// Frecuencias matemáticas exactas para Quena (Escala Am)
+			const e4 = 329.63, g4 = 392.00, a4 = 440.00, b4 = 493.88;
+			const c5 = 523.25, d5 = 587.33, e5 = 659.25;
+			const a5 = 880.00, b5 = 987.77, c6 = 1046.50, d6 = 1174.66;
+			
+			const melody = [
+				[{b:0, p:e4, d:1}, {b:1, p:a4, d:1}, {b:2, p:c5, d:1}, {b:3, p:b4, d:1}], // M0: Intro
+				[{b:0, p:a4, d:0.5}, {b:0.5, p:b4, d:0.5}, {b:1, p:c5, d:1}, {b:2, p:a4, d:2}], // M1
+				[{b:0, p:e4, d:1}, {b:1, p:a4, d:1}, {b:2, p:c5, d:1}, {b:3, p:b4, d:1}], // M2
+				[{b:0, p:a4, d:0.5}, {b:0.5, p:b4, d:0.5}, {b:1, p:c5, d:1}, {b:2, p:a4, d:2}], // M3
+
+				[{b:0, p:e5, d:2}, {b:2, p:e5, d:2}], // M4: Parte A
+				[{b:0, p:e5, d:1}, {b:1, p:e5, d:1}, {b:2, p:e5, d:2}], // M5
+				[{b:0, p:d5, d:2}, {b:2, p:c5, d:2}], // M6
+				[{b:0, p:b4, d:4}], // M7
+
+				[{b:0, p:a4, d:2}, {b:2, p:b4, d:2}], // M8
+				[{b:0, p:c5, d:1}, {b:1, p:b4, d:1}, {b:2, p:c5, d:1}, {b:3, p:d5, d:1}], // M9
+				[{b:0, p:e5, d:4}], // M10
+				[{b:0, p:a4, d:4}], // M11
+
+				[{b:0, p:e5, d:2}, {b:2, p:e5, d:2}], // M12
+				[{b:0, p:e5, d:1}, {b:1, p:e5, d:1}, {b:2, p:e5, d:2}], // M13
+				[{b:0, p:d5, d:2}, {b:2, p:c5, d:2}], // M14
+				[{b:0, p:b4, d:4}], // M15
+
+				[{b:0, p:a4, d:2}, {b:2, p:b4, d:2}], // M16
+				[{b:0, p:c5, d:1}, {b:1, p:b4, d:1}, {b:2, p:c5, d:1}, {b:3, p:d5, d:1}], // M17
+				[{b:0, p:e5, d:4}], // M18
+				[{b:0, p:a4, d:4}], // M19
+
+				[{b:0, p:g4, d:2}, {b:2, p:a4, d:2}], // M20
+				[{b:0, p:b4, d:1}, {b:1, p:g4, d:1}, {b:2, p:a4, d:1}, {b:3, p:b4, d:1}], // M21
+				[{b:0, p:c5, d:1}, {b:1, p:b4, d:1}, {b:2, p:c5, d:1}, {b:3, p:d5, d:1}], // M22
+				[{b:0, p:a4, d:4}], // M23
+
+				[{b:0, p:e4, d:2}, {b:2, p:a4, d:2}], // M24
+				[{b:0, p:c5, d:1}, {b:1, p:b4, d:1}, {b:2, p:c5, d:1}, {b:3, p:d5, d:1}], // M25
+				[{b:0, p:e5, d:4}], // M26
+				[], // M27
+
+				[{b:0, p:e5, d:2}, {b:2, p:e5, d:2}], // M28
+				[{b:0, p:e5, d:1}, {b:1, p:e5, d:1}, {b:2, p:e5, d:2}], // M29
+				[{b:0, p:d5, d:2}, {b:2, p:c5, d:2}], // M30
+				[{b:0, p:b4, d:4}], // M31
+
+				[{b:0, p:a4, d:2}, {b:2, p:b4, d:2}], // M32
+				[{b:0, p:c5, d:1}, {b:1, p:b4, d:1}, {b:2, p:c5, d:1}, {b:3, p:d5, d:1}], // M33
+				[{b:0, p:e5, d:4}], // M34
+				[{b:0, p:a4, d:4}], // M35
+
+				[{b:0, p:e5, d:1}, {b:1, p:c6, d:1}, {b:2, p:c6, d:1}, {b:3, p:c6, d:1}], // M36: Huayno
+				[{b:0, p:c6, d:0.5}, {b:0.5, p:b5, d:0.5}, {b:1, p:a5, d:1}, {b:2, p:b5, d:0.5}, {b:2.5, p:c6, d:0.5}, {b:3, p:a5, d:1}], // M37
+				[{b:0, p:e5, d:1}, {b:1, p:c6, d:1}, {b:2, p:c6, d:1}, {b:3, p:c6, d:1}], // M38
+				[{b:0, p:c6, d:0.5}, {b:0.5, p:b5, d:0.5}, {b:1, p:a5, d:1}, {b:2, p:b5, d:0.5}, {b:2.5, p:c6, d:0.5}, {b:3, p:a5, d:1}], // M39
+				[{b:0, p:e5, d:1}, {b:1, p:d6, d:1}, {b:2, p:c6, d:1}, {b:3, p:d6, d:1}], // M40
+				[{b:0, p:c6, d:0.5}, {b:0.5, p:b5, d:0.5}, {b:1, p:a5, d:1}, {b:2, p:b5, d:0.5}, {b:2.5, p:c6, d:0.5}, {b:3, p:a5, d:1}], // M41
+				[{b:0, p:e5, d:1}, {b:1, p:d6, d:1}, {b:2, p:c6, d:1}, {b:3, p:d6, d:1}], // M42
+				[{b:0, p:c6, d:0.5}, {b:0.5, p:b5, d:0.5}, {b:1, p:a5, d:1}, {b:2, p:b5, d:0.5}, {b:2.5, p:c6, d:0.5}, {b:3, p:a5, d:1}]  // M43
+			];
+
+			const Am = { bass: 110.00, chord: [220.00, 261.63, 329.63] };
+			const G  = { bass: 98.00,  chord: [196.00, 246.94, 293.66] };
+			const C  = { bass: 130.81, chord: [261.63, 329.63, 392.00] };
+			const Em = { bass: 82.41,  chord: [164.81, 196.00, 246.94] };
+
+			const chordsMap = [
+				Am, Am, Am, Am, // Intro 0-3
+				Am, Am, G, Em,  // Parte A 4-7
+				Am, C, Em, Am,  // 8-11
+				Am, Am, G, Em,  // 12-15
+				Am, C, Em, Am,  // 16-19
+				G, G, C, Am,    // 20-23
+				Am, C, Em, Am,  // 24-27
+				Am, Am, G, Em,  // 28-31
+				Am, C, Em, Am,  // 32-35
+				C, Am, C, Am,   // Parte B 36-39
+				G, Am, G, Am    // 40-43
+			];
+
+			const notes = melody[m] || [];
+			for (let note of notes) {
+				// Golpe de lengua más marcado al multiplicar por 0.95 el sustain
+				playNote(note.p, 'sine', startTime + note.b * beatDuration, note.d * beatDuration * 0.95, 0.45);
 			}
-			
-			// Bajo andino base
-			playNote(playRoot / 2, 'triangle', startTime, beatDuration * 2, 0.4);
-			playNote(playRoot / 2, 'triangle', startTime + beatDuration * 2, beatDuration * 2, 0.4);
-			
-			if (isIntro) {
-				// 1. INICIO: Nota solitaria y triste al principio (Zampoña)
-				playNote(playRoot * 2, 'sine', startTime, beatDuration * 4, 0.35);
-			} else if (isDev) {
-				// 2. DESARROLLO: Melancólico, arpegios lentos de Charango
-				for (let i = 0; i < 4; i++) {
-					const time = startTime + i * beatDuration;
-					playNote(playChord[i % 3] * 2, 'triangle', time, beatDuration, 0.25);
+
+			const c = chordsMap[m];
+			if (c) {
+				playNote(c.bass, 'triangle', startTime, beatDuration * 1.5, 0.4);
+				playNote(c.bass, 'triangle', startTime + beatDuration * 2, beatDuration * 1.5, 0.4);
+				for (let b of [1, 2.5, 3.5]) {
+					for (let freq of c.chord) {
+						playNote(freq, 'triangle', startTime + b * beatDuration, beatDuration * 0.4, 0.15);
+					}
 				}
-				// Zampoña llorando de fondo
-				playNote(playChord[1] * 2, 'sine', startTime, beatDuration * 4, 0.2);
-			} else if (isEnd) {
-				// 3. FINAL: Triste pero Alegre. Entra percusión andina y la melodía se acelera y vuelve mayor
-				for (let i = 0; i < 8; i++) {
-					const time = startTime + i * (beatDuration / 2);
-					playNote(playChord[i % 3] * 2, 'triangle', time, beatDuration/2, 0.2);
-				}
-				// Bombo y Chasquido (Caja)
-				playDrum('kick', startTime);
-				playDrum('snare', startTime + beatDuration);
-				playDrum('kick', startTime + beatDuration * 2);
-				playDrum('snare', startTime + beatDuration * 3);
 				
-				// Zampoña luminosa
-				playNote(playChord[2] * 2, 'sine', startTime, beatDuration * 4, 0.3);
+				// Ritmo: en la intro y parte A es más calmado, en huayno (36-43) es más movido
+				const isHuayno = m >= 36;
+				if (isHuayno) {
+					playDrum('kick', startTime);
+					playDrum('hat', startTime + beatDuration * 0.5);
+					playDrum('kick', startTime + beatDuration * 1);
+					playDrum('hat', startTime + beatDuration * 1.5);
+					playDrum('kick', startTime + beatDuration * 2);
+					playDrum('hat', startTime + beatDuration * 2.5);
+					playDrum('kick', startTime + beatDuration * 3);
+					playDrum('hat', startTime + beatDuration * 3.5);
+				} else {
+					playDrum('kick', startTime);
+					playDrum('kick', startTime + beatDuration * 2);
+					playDrum('hat', startTime + beatDuration * 1);
+					playDrum('hat', startTime + beatDuration * 3);
+				}
 			}
 			
 		} else if (currentSong.style === 'sad_andina') {
@@ -486,8 +561,8 @@ export function playEpicSong() {
 			
 			// Bucle infinito: en los temas andinos no necesitamos 31 compases obligatorios, 
 			// pero podemos resetear para variaciones.
-			if (currentSong.style === 'sad_andina_lamento' && currentMeasure >= 24) {
-				currentMeasure = 0; // El Lamento repite su ciclo emocional completo (Intro -> Dev -> Alegría)
+			if (currentSong.style === 'el_condor_pasa' && currentMeasure >= 44) {
+				currentMeasure = 0; // El Cóndor Pasa repite su ciclo de 44 compases
 			} else if (currentMeasure >= 32) {
 				currentMeasure = 8;
 			}
