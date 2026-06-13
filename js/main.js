@@ -68,13 +68,13 @@ function checkLevelUp() {
 					airplane.showMotivationAura = true;
 					playSalsaSong();
 					
-					// 3. A los 3 segundos (cuando la salsa ya se oye fuerte), llega la nave nodriza
+					// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
 					setTimeout(() => {
 						if (gameState !== 'welcome' && currentLevel === 5) {
 							if (mothership) mothership.startBossFight();
 							HUD.showBossUI();
 						}
-					}, 3000);
+					}, 20000);
 				}
 			}, 2000);
 		}
@@ -433,13 +433,13 @@ function resetGame() {
 				airplane.showMotivationAura = true;
 				playSalsaSong();
 				
-				// 3. A los 3 segundos (cuando la salsa ya se oye fuerte), llega la nave nodriza
+				// 3. A los 20 segundos de ascenso épico batallando con aliens, llega la nave nodriza
 				setTimeout(() => {
 					if (gameState !== 'welcome' && currentLevel === 5) {
 						if (mothership) mothership.startBossFight();
 						HUD.showBossUI();
 					}
-				}, 3000);
+				}, 20000);
 			}
 		}, 2000);
 	} else {
