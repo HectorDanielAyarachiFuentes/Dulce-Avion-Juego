@@ -40,8 +40,8 @@ export const Mothership = function() {
 	this.mesh.add(engine);
 	this.mesh.add(this.engineLight);
 	
-	// Scale massive
-	this.mesh.scale.set(4, 4, 4);
+	// Scale massive but fits on screen
+	this.mesh.scale.set(1.5, 1.5, 1.5);
 	
 	// Posición distante en el fondo
 	this.mesh.position.set(-800, 800, -6000); // Start very far away
@@ -59,16 +59,17 @@ export const Mothership = function() {
 	this.attackTimer = 0;
 	this.attackState = "idle"; // idle, sweeping, swarming, deathray
 	
-	// Death Ray Mesh
+	// Death Ray Mesh (ahora apunta a la izquierda, hacia el jugador)
 	const rayGeom = new THREE.CylinderGeometry(50, 50, 2000, 32);
-	rayGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -1000, 0));
+	rayGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2)); // Girar para que dispare en X
+	rayGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(-1000, 0, 0)); // Mover el centro del rayo
 	this.rayMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0, fog: false });
 	this.deathRay = new THREE.Mesh(rayGeom, this.rayMat);
-	this.deathRay.position.y = -50;
+	this.deathRay.position.x = -50;
 	this.mesh.add(this.deathRay);
 	
-	// Hitbox for collisions
-	this.hitboxRadiusSq = (200 * 4) * (200 * 4); // 800 radius
+	// Hitbox for collisions (radius 200 * 1.5 = 300)
+	this.hitboxRadiusSq = (300) * (300); 
 };
 
 Mothership.prototype.startBossFight = function() {
@@ -77,7 +78,7 @@ Mothership.prototype.startBossFight = function() {
 	this.introTimer = 0;
 };
 
-Mothership.prototype.update = function(time, level = 1) {
+Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 	let pulse = 0.6 + Math.sin(time * 0.005) * 0.4;
 	
 	if (this.state === "creeping") {
@@ -89,10 +90,14 @@ Mothership.prototype.update = function(time, level = 1) {
 	} 
 	else if (this.state === "intro") {
 		this.introTimer++;
-		// Acelera hacia el frente (z = -600)
-		this.mesh.position.z += (-600 - this.mesh.position.z) * 0.02;
-		this.mesh.position.y += (400 - this.mesh.position.y) * 0.02; // Baja un poco
-		this.mesh.rotation.x *= 0.95; // Se endereza
+		// Acelera hacia el lado derecho de la pantalla
+		this.mesh.position.x += (250 - this.mesh.position.x) * 0.05; 
+		this.mesh.position.y += (100 - this.mesh.position.y) * 0.05; 
+		this.mesh.position.z += (-50 - this.mesh.position.z) * 0.05;
+		
+		// Gira la nave para que se vea ligeramente de frente e inclinada hacia el jugador
+		this.mesh.rotation.z += (-0.2 - this.mesh.rotation.z) * 0.05;
+		this.mesh.rotation.x += (0.2 - this.mesh.rotation.x) * 0.05; 
 		
 		// El anillo gira más rápido
 		this.ring.rotation.z -= 0.02;
@@ -106,7 +111,13 @@ Mothership.prototype.update = function(time, level = 1) {
 	}
 	else if (this.state === "combat") {
 		this.attackTimer++;
-		this.mesh.position.y = 400 + Math.sin(time * 0.002) * 50;
+		// Movimiento vertical de jefe clásico
+		this.mesh.position.y = 100 + Math.sin(time * 0.002) * 80;
+		this.mesh.position.x = 250 + Math.sin(time * 0.001) * 30; // Hover leve en X
+		
+		// Mantenerlo inclinado ominosamente
+		this.mesh.rotation.z = -0.2;
+		this.mesh.rotation.x = 0.2;
 		
 		// Determinar fase según la vida
 		if (this.health > 1000) this.combatPhase = 1;
@@ -127,9 +138,16 @@ Mothership.prototype.update = function(time, level = 1) {
 			}
 		} 
 		else if (this.attackState === "sweeping") {
-			// Simular un barrido inclinando la nave y brillando el motor
-			this.mesh.rotation.x = Math.sin(this.attackTimer * 0.05) * 0.3;
+			// Simular un barrido inclinando la nave un poco más
+			this.mesh.rotation.z = -0.2 + Math.sin(this.attackTimer * 0.05) * 0.2;
 			pulse = 1.0;
+			
+			// Disparar laseres constantemente
+			if (enemyManager && this.attackTimer % 10 === 0) {
+				const lx = this.mesh.position.x - 100;
+				const ly = this.mesh.position.y + (Math.random() - 0.5) * 150;
+				enemyManager.shootBossLaser(lx, ly, this.mesh.position.z, -10 - Math.random() * 5, 0);
+			}
 			
 			if (this.attackTimer > 200) {
 				this.attackState = "idle";
@@ -139,6 +157,14 @@ Mothership.prototype.update = function(time, level = 1) {
 		else if (this.attackState === "swarming") {
 			// Brilla intermitentemente para "invocar"
 			pulse = (this.attackTimer % 10 < 5) ? 1.0 : 0.2;
+			
+			// Tirar bombas hacia adelante (izquierda)
+			if (enemyManager && this.attackTimer % 30 === 0) {
+				const bx = this.mesh.position.x - 100;
+				const by = this.mesh.position.y + (Math.random() - 0.5) * 200;
+				enemyManager.dropBossBomb(bx, by, this.mesh.position.z);
+			}
+			
 			if (this.attackTimer > 100) {
 				this.attackState = "idle";
 				this.attackTimer = 0;
@@ -156,9 +182,8 @@ Mothership.prototype.update = function(time, level = 1) {
 				this.rayMat.opacity = 0.8 + Math.random() * 0.2;
 				this.engineLight.material.color.setHex(0xffffff);
 				pulse = 1.0;
-				// El rayo barre ligeramente
-				this.mesh.rotation.x = Math.sin(this.attackTimer * 0.05) * 0.1;
-				this.mesh.rotation.z = Math.cos(this.attackTimer * 0.05) * 0.1;
+				// El rayo barre ligeramente moviendo el angulo
+				this.mesh.rotation.z = -0.2 + Math.sin(this.attackTimer * 0.05) * 0.1;
 			} else {
 				// Recuperación
 				this.rayMat.opacity = 0;

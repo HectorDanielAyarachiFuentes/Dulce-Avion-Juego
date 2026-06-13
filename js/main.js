@@ -27,6 +27,9 @@ import { BackgroundBattle } from './objects/BackgroundBattle.js';
 
 let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle;
 let mousePos = { x: 0, y: 0 };
+
+let currentWorldY = -3000;
+let targetWorldY = -3000;
 let isShootingMG = false;
 let mgTimer = 0;
 let reloadTimer = 0;
@@ -52,6 +55,7 @@ function checkLevelUp() {
 		updateEnvironmentColor();
 		
 		if (currentLevel === 5) {
+			targetWorldY = -8000; // El mundo se hunde para simular vuelo a gran altitud
 			mothership.startBossFight();
 			HUD.showBossUI();
 		}
@@ -385,6 +389,8 @@ function resetGame() {
 	HUD.updateEnergy(energy);
 	HUD.updateScore(score);
 	
+	targetWorldY = -3000;
+	
 	if (mothership) {
 		mothership.state = "creeping";
 		mothership.health = mothership.maxHealth;
@@ -409,6 +415,17 @@ function loop() {
 	}
 	grass.mesh.rotation.z += .002;
 	rocks.mesh.rotation.z += .002;
+	
+	// Transición de altitud del mundo
+	if (currentWorldY !== targetWorldY) {
+		currentWorldY += (targetWorldY - currentWorldY) * 0.01;
+		sea.mesh.position.y = currentWorldY;
+		lakes.mesh.position.y = currentWorldY;
+		forest.mesh.position.y = currentWorldY;
+		mountains.mesh.position.y = currentWorldY;
+		grass.mesh.position.y = currentWorldY;
+		rocks.mesh.position.y = currentWorldY;
+	}
 	
 	// Efecto de relámpagos en el nivel 4
 	if (currentLevel === 4) {
@@ -585,7 +602,7 @@ function loop() {
 		
 		// Update epic background
 		if (mothership) {
-			mothership.update(Date.now(), currentLevel);
+			mothership.update(Date.now(), currentLevel, enemyManager);
 			if (mothership.state === "combat" || mothership.state === "intro") {
 				HUD.updateBossHealth(mothership.health, mothership.maxHealth);
 				

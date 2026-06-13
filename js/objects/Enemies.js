@@ -4,7 +4,7 @@
 import { Colors } from '../utils/colors.js';
 import { Captive } from './Captive.js';
 
-export const AlienLaser = function(x, y, z) {
+export const AlienLaser = function(x, y, z, vx = -15, vy = 0) {
 	this.mesh = new THREE.Object3D();
 	const geom = new THREE.CylinderGeometry(0.5, 0.5, 8, 4);
 	geom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2));
@@ -12,13 +12,15 @@ export const AlienLaser = function(x, y, z) {
 	const body = new THREE.Mesh(geom, mat);
 	this.mesh.add(body);
 	this.mesh.position.set(x, y, z);
-	this.speed = -15; // Mueve hacia la izquierda (hacia el avión)
+	this.speedX = vx;
+	this.speedY = vy;
 	this.active = true;
 };
 
 AlienLaser.prototype.update = function() {
-	this.mesh.position.x += this.speed;
-	if (this.mesh.position.x < -150) {
+	this.mesh.position.x += this.speedX;
+	this.mesh.position.y += this.speedY;
+	if (this.mesh.position.x < -150 || this.mesh.position.y < -50 || this.mesh.position.y > 600) {
 		this.active = false;
 	}
 };
@@ -246,6 +248,30 @@ export const EnemyManager = function(scene) {
 	this.stateDuration = 300; // frames iniciales
 };
 
+EnemyManager.prototype.shootLaser = function(ufo) {
+	const laser = new AlienLaser(ufo.mesh.position.x - 10, ufo.mesh.position.y, ufo.mesh.position.z);
+	this.scene.add(laser.mesh);
+	this.lasers.push(laser);
+};
+
+EnemyManager.prototype.shootBossLaser = function(x, y, z, vx, vy) {
+	const laser = new AlienLaser(x, y, z, vx, vy);
+	this.scene.add(laser.mesh);
+	this.lasers.push(laser);
+};
+
+EnemyManager.prototype.dropBomb = function(ufo) {
+	const bomb = new AlienBomb(ufo.mesh.position.x, ufo.mesh.position.y - 10, ufo.mesh.position.z);
+	this.scene.add(bomb.mesh);
+	this.bombs.push(bomb);
+};
+
+EnemyManager.prototype.dropBossBomb = function(x, y, z) {
+	const bomb = new AlienBomb(x, y, z);
+	this.scene.add(bomb.mesh);
+	this.bombs.push(bomb);
+};
+
 EnemyManager.prototype.spawnUfo = function(level = 1) {
 	let type = 'basic';
 	if (level >= 2 && Math.random() < 0.3) type = 'kamikaze';
@@ -256,17 +282,6 @@ EnemyManager.prototype.spawnUfo = function(level = 1) {
 	this.ufos.push(ufo);
 };
 
-EnemyManager.prototype.shootLaser = function(ufo) {
-	const laser = new AlienLaser(ufo.mesh.position.x - 15, ufo.mesh.position.y, ufo.mesh.position.z);
-	this.scene.add(laser.mesh);
-	this.lasers.push(laser);
-};
-
-EnemyManager.prototype.dropBomb = function(ufo) {
-	const bomb = new AlienBomb(ufo.mesh.position.x, ufo.mesh.position.y - 10, ufo.mesh.position.z);
-	this.scene.add(bomb.mesh);
-	this.bombs.push(bomb);
-};
 
 EnemyManager.prototype.update = function(time, planeY, currentLevel, onShootLaser) {
 	this.spawnTimer++;
