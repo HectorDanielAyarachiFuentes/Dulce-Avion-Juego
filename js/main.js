@@ -206,6 +206,10 @@ function updateEagle() {
 	}
 }
 
+let isLooping = false;
+let loopAngle = 0;
+let lastTargetX = 0;
+
 function updatePlane() {
 	// Cálculo exacto del límite de la pantalla basado en la cámara (FOV 60)
 	const zDist = camera.position.z; // 280
@@ -217,6 +221,9 @@ function updatePlane() {
 	let targetY = camera.position.y + (mousePos.y * topY * 0.95);
 	const targetX = (mousePos.x * rightX * 0.95);
 	
+	const mouseDeltaX = targetX - lastTargetX;
+	lastTargetX = targetX;
+	
 	// Limitar para que no atraviese el suelo (El cilindro está en Y=0)
 	if (targetY < 35) targetY = 35;
 
@@ -227,10 +234,36 @@ function updatePlane() {
 	airplane.mesh.position.y += diffY * 0.1;
 	airplane.mesh.position.x += diffX * 0.1;
 
-	// Efecto de giro más "plano" (suave)
-	airplane.mesh.rotation.z = diffY * 0.005; 
-	airplane.mesh.rotation.x = -diffY * 0.002;
-	airplane.mesh.rotation.y = -diffX * 0.005;
+	// Rizo (Loop-the-loop) solo cuando hay un "flick" brusco del ratón hacia atrás
+	if (!isLooping && mouseDeltaX < -10 && diffX < -10) {
+		isLooping = true;
+		loopAngle = 0;
+		// Soltar un poco de humo en las alas al iniciar la acrobacia
+		const p = airplane.mesh.position;
+		weaponManager.spawnContrail(p.x - 5, p.y + 2, p.z + 18);
+		weaponManager.spawnContrail(p.x - 5, p.y + 2, p.z - 18);
+	}
+
+	if (isLooping) {
+		loopAngle += 0.12; // Velocidad de giro más suave y natural (~52 frames)
+		if (loopAngle >= Math.PI * 2) {
+			isLooping = false;
+			loopAngle = 0;
+		}
+	}
+
+	// Aplicar rotaciones
+	if (isLooping) {
+		// Rotación completa de backflip en Z, más un poco de los otros ejes para suavidad
+		airplane.mesh.rotation.z = loopAngle;
+		airplane.mesh.rotation.x = -diffY * 0.002;
+		airplane.mesh.rotation.y = -diffX * 0.005;
+	} else {
+		// Efecto de giro más "plano" (suave) normal
+		airplane.mesh.rotation.z = diffY * 0.005; 
+		airplane.mesh.rotation.x = -diffY * 0.002;
+		airplane.mesh.rotation.y = -diffX * 0.005;
+	}
 
 	airplane.propeller.rotation.x += 0.3;
 	
