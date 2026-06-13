@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Defines eagle obstacles/enemies.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Eagle = function() {

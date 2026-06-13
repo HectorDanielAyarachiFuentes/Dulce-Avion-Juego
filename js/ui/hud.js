@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Handles the 2D Heads-Up Display (HUD) overlay and UI state (score, health, energy).
+ */
 import { Colors } from '../utils/colors.js';
 
 function createTextSprite(message, color) {

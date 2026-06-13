@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Generates grass details for the world surface.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Blade = function() {

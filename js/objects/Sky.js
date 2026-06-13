@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Defines the Sky object with moving clouds, sun, and moon.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Cloud = function () {

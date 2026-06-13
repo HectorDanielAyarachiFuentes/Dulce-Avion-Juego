@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Generates mountain scenery elements.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Mountain = function() {

@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Manages player weapons (machine gun, lasers) and bullet physics.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const SmokeParticle = function(x, y, z) {

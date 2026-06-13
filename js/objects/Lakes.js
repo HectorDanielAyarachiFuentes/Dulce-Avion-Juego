@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Generates lake/water scenery for the world.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Lake = function() {

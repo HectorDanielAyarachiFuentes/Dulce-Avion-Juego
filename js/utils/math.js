@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Utility mathematical functions (e.g., normalization, random generation).
+ */
 export function normalize(v, vmin, vmax, tmin, tmax) {
 	const nv = Math.max(Math.min(v, vmax), vmin);
 	const dv = vmax - vmin;

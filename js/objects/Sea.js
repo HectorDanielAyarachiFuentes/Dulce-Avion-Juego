@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Defines the Sea/World base object (the rotating cylinder).
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Sea = function () {

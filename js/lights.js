@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Configures lighting for the 3D scene (Ambient, Hemisphere, Directional).
+ */
 export let hemisphereLight, shadowLight, ambientLight;
 
 export function createLights(scene) {

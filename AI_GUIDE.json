@@ -1,0 +1,49 @@
+{
+  "project_name": "Dulce Avion 3D",
+  "description": "A 3D arcade browser game using Three.js where the player pilots a cardboard airplane to defend against enemies.",
+  "structure": {
+    "index.html": "Main HTML file. Loads stylesheets and provides the container for the WebGL canvas and UI.",
+    "style.css": "Game styling, UI overlays, menus, and typography.",
+    "libs/": {
+      "three.module.min.js": "Three.js core library (ES Module format).",
+      "three.core.min.js": "Three.js internal core logic (required by the module)."
+    },
+    "js/": {
+      "main.js": "Game loop, initialization, level logic, global game state, and input handling.",
+      "scene.js": "Three.js scene, camera, and renderer setup.",
+      "lights.js": "Scene lighting setup.",
+      "objects/": {
+        "Airplane.js": "Player character model and animation logic.",
+        "Weapons.js": "Weapon systems, bullets, and firing mechanics.",
+        "Enemies.js": "Enemy spawning, enemy types (basic, boss), and collision logic.",
+        "Sea.js": "The rotating planet/sea that acts as the ground.",
+        "Sky.js": "Skybox logic, clouds, sun, and moon.",
+        "Forest.js": "Tree scenery generator.",
+        "Mountains.js": "Mountain scenery generator.",
+        "Lakes.js": "Lake scenery generator.",
+        "Rocks.js": "Rock scenery generator.",
+        "Grass.js": "Grass scenery generator.",
+        "Rain.js": "Weather effects (rain particles)."
+      },
+      "ui/": {
+        "hud.js": "In-game HUD rendering logic (score, health, energy)."
+      },
+      "utils/": {
+        "audio.js": "Audio management (SFX, music).",
+        "colors.js": "Centralized color palette definitions.",
+        "math.js": "Helper math functions."
+      }
+    }
+  },
+  "conventions": {
+    "modules": "Uses ES6 modules heavily. main.js exposes THREE to window.THREE to support modules that might assume global scope.",
+    "colors": "Materials use hex colors from js/utils/colors.js.",
+    "lighting": "Uses Three.js physically correct lighting. Intensities are relatively high (e.g. 3.0 - 4.5) to achieve the vibrant 'colorinche' look.",
+    "renderer": "Configured with THREE.LinearSRGBColorSpace to maintain bright, legacy-style colors despite modern color management."
+  },
+  "important_rules": [
+    "Whenever you modify the responsibility of a file, update this AI_GUIDE.json.",
+    "If adding new 3D objects or scenery, ensure they are integrated smoothly without breaking the global ColorManagement rules set in scene.js.",
+    "All JS files must have a JSDoc block comment at line 1 summarizing what they do."
+  ]
+}

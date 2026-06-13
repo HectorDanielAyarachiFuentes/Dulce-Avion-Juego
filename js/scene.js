@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Sets up the Three.js scene, camera, renderer, and handles window resizing.
+ */
 export let scene, camera, fieldOfView, aspectRatio, nearPlane, farPlane, HEIGHT, WIDTH, renderer, container;
 
 export function createScene() {

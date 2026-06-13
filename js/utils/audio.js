@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Manages all sound effects, music playback, and audio settings.
+ */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 let noiseBuffer;

@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Main entry point. Initializes Three.js, manages game loop, user inputs, level progression, and object updates.
+ */
 import * as THREE from '../libs/three.module.min.js';
 window.THREE = THREE;
 THREE.ColorManagement.enabled = false;

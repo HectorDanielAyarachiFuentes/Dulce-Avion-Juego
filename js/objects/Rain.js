@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Handles rain particle effects and weather transitions.
+ */
 export class Rain {
 	constructor() {
 		const particleCount = 1500;

@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Generates rock scenery for the world.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Rock = function() {

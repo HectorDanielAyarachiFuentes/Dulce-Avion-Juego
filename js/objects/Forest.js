@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Generates forest/tree scenery across the world surface.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Tree = function() {

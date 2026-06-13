@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Manages enemy generation, enemy types (ships, disks, bosses), and collision logic.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const AlienLaser = function(x, y, z) {

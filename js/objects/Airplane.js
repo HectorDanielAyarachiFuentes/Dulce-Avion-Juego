@@ -1,3 +1,6 @@
+/**
+ * AI SUMMARY: Defines the player's airplane model (AirPlane class) and its animations.
+ */
 import { Colors } from '../utils/colors.js';
 
 export const Pilot = function () {
