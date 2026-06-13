@@ -31,6 +31,7 @@ export function createScene() {
 	});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.BasicShadowMap; // Soluciona el warning de WebGL sobre Filtering LINEAR
 	renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
 	container = document.getElementById('world');

@@ -63,3 +63,7 @@ Sea.prototype.moveWaves = function (){
 
 	this.mesh.geometry.attributes.position.needsUpdate = true;
 };
+
+Sea.prototype.reset = function() {
+	this.mesh.rotation.set(0, 0, 0);
+};

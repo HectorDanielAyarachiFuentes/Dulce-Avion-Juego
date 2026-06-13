@@ -275,3 +275,17 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		}
 	}
 };
+
+Mothership.prototype.reset = function() {
+	this.health = 5000;
+	this.maxHealth = 5000;
+	this.state = "creeping";
+	this.introTimer = 0;
+	this.combatPhase = 0;
+	this.attackTimer = 0;
+	this.attackState = "idle";
+	
+	this.mesh.position.set(-800, 800, -6000);
+	this.mesh.rotation.set(0.2, 0, -0.1);
+	if (this.rayMat) this.rayMat.opacity = 0;
+};

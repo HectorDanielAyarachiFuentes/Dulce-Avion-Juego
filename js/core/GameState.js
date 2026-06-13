@@ -18,10 +18,17 @@ export const GameState = {
 	machineGunHeat: 0,
 	isOverheated: false,
 	
-	reset: function() {
-		this.score = 0;
+	reset: function(startLevel = 1) {
+		this.currentLevel = startLevel;
+		
+		// Establecer puntuación según el nivel inicial
+		if (startLevel === 2) this.score = 500;
+		else if (startLevel === 3) this.score = 1000;
+		else if (startLevel === 4) this.score = 1500;
+		else if (startLevel === 5) this.score = 2000;
+		else this.score = 0;
+
 		this.energy = 100;
-		this.currentLevel = 1;
 		this.gameSpeed = 0.003;
 		this.targetGameSpeed = 0.003;
 		this.targetWorldY = -3000;

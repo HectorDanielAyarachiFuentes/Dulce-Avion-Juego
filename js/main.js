@@ -202,18 +202,21 @@ function updatePlane() {
 function loop() {
 	airplane.propeller.rotation.x += 0.3;
 
+	// Smoothly interpolate gameSpeed
+	GameState.gameSpeed += (GameState.targetGameSpeed - GameState.gameSpeed) * 0.02;
+
 	// Rotar el "treadmill" gigante
-	sea.mesh.rotation.z += .002;
-	lakes.mesh.rotation.z += .002;
-	forest.mesh.rotation.z += .002;
-	mountains.mesh.rotation.z += .002;
-	sky.mesh.rotation.z += .004;
+	sea.mesh.rotation.z += GameState.gameSpeed;
+	lakes.mesh.rotation.z += GameState.gameSpeed;
+	forest.mesh.rotation.z += GameState.gameSpeed;
+	mountains.mesh.rotation.z += GameState.gameSpeed;
+	sky.mesh.rotation.z += GameState.gameSpeed * 2;
 	if (sky.celestials) {
-		sky.sun.rotation.z += 0.002;
-		sky.moon.rotation.y += 0.002;
+		sky.sun.rotation.z += GameState.gameSpeed;
+		sky.moon.rotation.y += GameState.gameSpeed;
 	}
-	grass.mesh.rotation.z += .002;
-	rocks.mesh.rotation.z += .002;
+	grass.mesh.rotation.z += GameState.gameSpeed;
+	rocks.mesh.rotation.z += GameState.gameSpeed;
 	
 	// Transición de altitud del mundo
 	if (GameState.currentWorldY !== GameState.targetWorldY) {

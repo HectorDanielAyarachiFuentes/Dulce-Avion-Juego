@@ -25,7 +25,11 @@ export const UIManager = {
 				welcomeScreen.classList.add('hidden');
 				GameState.gameState = 'playing';
 				document.body.classList.add('playing');
-				LevelManager.resetGame();
+				
+				const levelSelect = document.getElementById('start-level-select');
+				const startLevel = levelSelect ? parseInt(levelSelect.value) : 1;
+				
+				LevelManager.resetGame(startLevel);
 				playEpicSong(); 
 				startPropellerSound(); 
 			});
@@ -36,13 +40,13 @@ export const UIManager = {
 		if (testVictoryBtn) {
 			testVictoryBtn.addEventListener('click', () => {
 				welcomeScreen.classList.add('hidden');
+				settingsModal.classList.add('hidden'); // CIERRA EL MODAL DE AJUSTES
 				GameState.gameState = 'playing';
 				document.body.classList.add('playing');
 				LevelManager.resetGame();
 				
 				// Simulate killing the boss
-				GameState.score = 2000;
-				LevelManager.checkLevelUp();
+				GameState.currentLevel = 5;
 				if (mothership) mothership.health = 0;
 				LevelManager.triggerVictory();
 			});

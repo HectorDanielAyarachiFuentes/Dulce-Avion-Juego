@@ -318,13 +318,20 @@ body.playing {
 	width: 60%;
 	text-align: center;
 	z-index: 100;
-	transition: opacity 1s ease;
 	font-family: 'Terminal', sans-serif;
 }
 
 #boss-ui.hidden {
-	opacity: 0;
-	pointer-events: none;
+	display: none;
+}
+
+#boss-ui:not(.hidden) {
+	animation: bossFadeIn 1s forwards;
+}
+
+@keyframes bossFadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 
 #boss-name {

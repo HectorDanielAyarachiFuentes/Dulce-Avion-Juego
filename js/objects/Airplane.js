@@ -442,3 +442,18 @@ AirPlane.prototype.applyStyle = function(styleId) {
 	this.matTailPlane.color.setHex(c3);
 	this.matSideWing.color.setHex(c4);
 };
+
+AirPlane.prototype.reset = function() {
+	this.ammo = 8;
+	this.mesh.position.set(0, 100, 0);
+	this.mesh.rotation.set(0, 0, 0);
+	this.isSearchingRadio = false;
+	this.showMotivationAura = false;
+	
+	// Restaurar visibilidad de todos los misiles
+	for (let i = 0; i < 8; i++) {
+		if (this.missileMeshes[i]) {
+			this.missileMeshes[i].visible = true;
+		}
+	}
+};

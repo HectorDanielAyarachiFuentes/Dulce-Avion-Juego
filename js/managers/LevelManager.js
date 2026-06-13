@@ -203,10 +203,10 @@ export const LevelManager = {
 		}, 3000);
 	},
 	
-	resetGame: function() {
-		const { airplane, sea, enemyManager, weaponManager, rain, mothership, victoryScene, camera, lakes, forest, eagle, grass, rocks, sky, bgBattle } = this.context;
+	resetGame: function(startLevel = 1) {
+		const { airplane, sea, enemyManager, weaponManager, rain, mothership, victoryScene, camera, lakes, forest, eagle, grass, rocks, sky, bgBattle, mountains } = this.context;
 		
-		GameState.reset();
+		GameState.reset(startLevel);
 		airplane.reset();
 		sea.reset();
 		if (enemyManager) enemyManager.reset();
@@ -243,5 +243,10 @@ export const LevelManager = {
 		// Restaurar cámara
 		camera.position.set(0, 100, 200);
 		camera.lookAt(0, 0, 0);
+		
+		// Si se inicia directamente en el nivel 5, activar la secuencia del jefe
+		if (startLevel === 5) {
+			this.startLevel5Sequence();
+		}
 	}
 };
