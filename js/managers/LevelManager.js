@@ -17,10 +17,10 @@ export const LevelManager = {
 
 	checkLevelUp: function() {
 		let newLevel = 1;
-		if (GameState.score >= 2000) newLevel = 5;
-		else if (GameState.score >= 1500) newLevel = 4;
-		else if (GameState.score >= 1000) newLevel = 3;
-		else if (GameState.score >= 500) newLevel = 2;
+		if (GameState.score >= 13000) newLevel = 5;
+		else if (GameState.score >= 8000) newLevel = 4;
+		else if (GameState.score >= 4000) newLevel = 3;
+		else if (GameState.score >= 1500) newLevel = 2;
 		
 		if (newLevel > GameState.currentLevel) {
 			GameState.currentLevel = newLevel;

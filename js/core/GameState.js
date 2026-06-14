@@ -22,10 +22,10 @@ export const GameState = {
 		this.currentLevel = startLevel;
 		
 		// Establecer puntuación según el nivel inicial
-		if (startLevel === 2) this.score = 500;
-		else if (startLevel === 3) this.score = 1000;
-		else if (startLevel === 4) this.score = 1500;
-		else if (startLevel === 5) this.score = 2000;
+		if (startLevel === 2) this.score = 1500;
+		else if (startLevel === 3) this.score = 4000;
+		else if (startLevel === 4) this.score = 8000;
+		else if (startLevel === 5) this.score = 13000;
 		else this.score = 0;
 
 		this.energy = 100;
