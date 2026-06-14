@@ -124,6 +124,12 @@ export const InputManager = {
 				event.preventDefault(); // Evitar scroll
 			}
 		}
+		// DEBUG: Tecla K mata al boss instantáneamente
+		if (event.code === 'KeyK' && GameState.gameState === 'playing') {
+			if (this.context && this.context.weaponManager) {
+				document.dispatchEvent(new Event('debugKillBoss'));
+			}
+		}
 	},
 
 	handleKeyUp: function(event) {

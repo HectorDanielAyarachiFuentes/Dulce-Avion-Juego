@@ -3,7 +3,7 @@
  */
 import { GameState } from '../core/GameState.js';
 import { HUD } from '../ui/hud.js';
-import { playSalsaSong, stopSalsaSong, playRadioTuningSound } from '../utils/audio.js';
+import { playSalsaSong, stopSalsaSong, playRadioTuningSound, stopEpicSong, stopPropellerSound, stopRainSound } from '../utils/audio.js';
 
 export const LevelManager = {
 	context: null,
@@ -167,7 +167,15 @@ export const LevelManager = {
 
 	triggerVictory: function() {
 		GameState.gameState = 'victory'; // Halt main game loop immediately!
-		playSalsaSong(); // Reproducir la salsa de Marc Anthony en la escena de créditos
+		
+		try {
+			stopEpicSong();
+			stopPropellerSound();
+			stopRainSound();
+			playSalsaSong();
+		} catch(e) {
+			console.warn('Audio error during victory:', e);
+		}
 		
 		const { victoryScene, airplane, mothership, enemyManager, weaponManager, camera, scene, bgBattle } = this.context;
 		
@@ -177,7 +185,7 @@ export const LevelManager = {
 			GameState.gameSpeed = 0;
 			GameState.targetGameSpeed = 0;
 			
-			airplane.mesh.visible = false;
+			if (airplane) airplane.mesh.visible = false;
 			if (mothership) mothership.mesh.visible = false;
 			if (bgBattle) bgBattle.mesh.visible = false;
 			HUD.hide();

@@ -310,12 +310,16 @@ function loop() {
 			const laser = enemyManager.lasers[i];
 			if (laser.active && laser.mesh.position.distanceTo(planePos) < 20) {
 				laser.active = false; // Destroy laser
-				GameState.energy -= 5; // Reduced from 10
+				GameState.energy -= 5;
 				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (GameState.energy <= 0) {
+					GameState.gameState = 'menu';
+					document.getElementById('welcome-screen').classList.remove('hidden');
+					document.body.classList.remove('playing');
 					LevelManager.resetGame();
+					return; // Salir del frame inmediatamente
 				}
 			}
 		}
@@ -328,12 +332,16 @@ function loop() {
 				playExplosionSound();
 				weaponManager.spawnSmoke(ufo.mesh.position.x, ufo.mesh.position.y, ufo.mesh.position.z);
 				
-				GameState.energy -= (ufo.type === 'kamikaze') ? 15 : 10; // Reduced from 25 : 15
+				GameState.energy -= (ufo.type === 'kamikaze') ? 15 : 10;
 				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (GameState.energy <= 0) {
+					GameState.gameState = 'menu';
+					document.getElementById('welcome-screen').classList.remove('hidden');
+					document.body.classList.remove('playing');
 					LevelManager.resetGame();
+					return;
 				}
 			}
 		}
@@ -346,12 +354,16 @@ function loop() {
 				playExplosionSound();
 				weaponManager.spawnSmoke(bomb.mesh.position.x, bomb.mesh.position.y, bomb.mesh.position.z);
 				
-				GameState.energy -= 15; // Las bombas hacen menos daño, reducido de 30
+				GameState.energy -= 15;
 				HUD.updateEnergy(GameState.energy);
 				weaponManager.spawnSpark(planePos.x, planePos.y, planePos.z);
 				
 				if (GameState.energy <= 0) {
+					GameState.gameState = 'menu';
+					document.getElementById('welcome-screen').classList.remove('hidden');
+					document.body.classList.remove('playing');
 					LevelManager.resetGame();
+					return;
 				}
 			}
 		}
@@ -414,7 +426,13 @@ function loop() {
 					if (Math.abs(airplane.mesh.position.y - 100) < 60) {
 						GameState.energy -= 1.0;
 						HUD.updateEnergy(GameState.energy);
-						if (GameState.energy <= 0) LevelManager.resetGame();
+						if (GameState.energy <= 0) {
+							GameState.gameState = 'menu';
+							document.getElementById('welcome-screen').classList.remove('hidden');
+							document.body.classList.remove('playing');
+							LevelManager.resetGame();
+							return;
+						}
 					}
 				}
 				
@@ -502,6 +520,24 @@ function init() {
 		if (typeof previewPlane !== 'undefined' && previewPlane) {
 			previewPlane.applyStyle(e.detail);
 		}
+	});
+
+	// DEBUG: Evento para matar al boss instantáneamente con la tecla K
+	document.addEventListener('debugKillBoss', () => {
+		if (mothership && GameState.gameState === 'playing' && GameState.currentLevel === 5) {
+			if (mothership.state !== 'dead') {
+				mothership.state = 'dead';
+				mothership.health = 0;
+				if (bgBattle) bgBattle.triggerNuke(GameState.currentLevel);
+				GameState.score += 5000;
+				HUD.hideBossUI();
+				LevelManager.triggerVictory();
+			}
+		}
+	});
+
+	document.addEventListener('openSettings', () => {
+		initPreview();
 	});
 
 	loop();
