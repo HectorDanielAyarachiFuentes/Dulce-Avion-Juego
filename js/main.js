@@ -491,6 +491,7 @@ function init() {
 	HUD.addMiniPlane(airplane.mesh.clone());
 	HUD.updateScore(GameState.score);
 	HUD.updateEnergy(GameState.energy);
+	HUD.hide();
 	
 	// Inicializar Managers
 	InputManager.init(window.innerWidth, window.innerHeight, { camera, HUD, airplane, weaponManager });

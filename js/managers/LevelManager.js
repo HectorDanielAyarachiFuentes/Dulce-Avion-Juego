@@ -241,7 +241,11 @@ export const LevelManager = {
 		if (rain) rain.mesh.visible = true;
 		if (mothership) mothership.mesh.visible = true;
 		if (bgBattle) bgBattle.mesh.visible = true;
-		HUD.show();
+		if (GameState.gameState === 'playing') {
+			HUD.show();
+		} else {
+			HUD.hide();
+		}
 		
 		// Restaurar cámara
 		camera.position.set(0, 100, 280);

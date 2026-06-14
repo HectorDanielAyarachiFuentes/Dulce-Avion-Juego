@@ -397,11 +397,13 @@ export const HUD = {
 	
 	hide: function() {
 		if (this.mesh) this.mesh.visible = false;
+		if (this.gearMesh) this.gearMesh.visible = false;
 		const bossBar = document.getElementById('boss-health-container');
 		if (bossBar) bossBar.style.display = 'none';
 	},
 	
 	show: function() {
 		if (this.mesh) this.mesh.visible = true;
+		if (this.gearMesh) this.gearMesh.visible = true;
 	}
 };
