@@ -169,12 +169,6 @@ export const LevelManager = {
 		GameState.gameState = 'victory'; // Halt main game loop immediately!
 		playSalsaSong(); // Reproducir la salsa de Marc Anthony en la escena de créditos
 		
-		const levelText = document.getElementById('level-text');
-		const levelSubtext = document.getElementById('level-subtext');
-		levelText.innerText = "¡VICTORIA!";
-		levelSubtext.innerText = "LA TIERRA ESTÁ A SALVO";
-		document.getElementById('level-up-message').classList.remove('hidden');
-		
 		const { victoryScene, airplane, mothership, enemyManager, weaponManager, camera, scene, bgBattle } = this.context;
 		
 		if (victoryScene) {
@@ -198,11 +192,8 @@ export const LevelManager = {
 			camera.lookAt(10, 20, 0);
 		}
 		
-		setTimeout(() => {
-			document.getElementById('level-up-message').classList.add('hidden');
-			document.getElementById('credits-screen').classList.remove('hidden');
-			GameState.gameState = 'gameover'; // Final state
-		}, 3000);
+		document.getElementById('credits-screen').classList.remove('hidden');
+		GameState.gameState = 'gameover'; // Final state
 	},
 	
 	resetGame: function(startLevel = 1) {
