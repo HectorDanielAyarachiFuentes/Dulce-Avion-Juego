@@ -6,8 +6,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 function setupModel(model) {
 	model.traverse(child => {
 		if (child.isMesh) {
-			child.castShadow = true;
-			child.receiveShadow = true;
+			child.castShadow = false;
+			child.receiveShadow = false;
 		}
 	});
 }
@@ -42,10 +42,10 @@ export const Rocks = function() {
 	
 	loader.load('assets/models/nature_kit/Rock Medium.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 30, 4); 
+		placeItems(gltf.scene, 15, 4); 
 	});
 	loader.load('assets/models/nature_kit/Pebble Round.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 20, 3); 
+		placeItems(gltf.scene, 10, 3); 
 	});
 };

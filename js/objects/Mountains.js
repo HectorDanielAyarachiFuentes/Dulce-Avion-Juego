@@ -7,7 +7,7 @@ function setupModel(model) {
 	model.traverse(child => {
 		if (child.isMesh) {
 			child.castShadow = true;
-			child.receiveShadow = true;
+			child.receiveShadow = false; // Ahorro de GPU: montañas no necesitan recibir sombras
 		}
 	});
 }
@@ -19,7 +19,6 @@ export const Mountains = function() {
 	const placeItems = (modelTemplate, count, baseScale, isDistant = false) => {
 		const stepAngle = Math.PI * 2 / count;
 		for(let i=0; i<count; i++) {
-			// Contenedor externo: solo maneja posición orbital y rotación Z
 			const container = new THREE.Object3D();
 			const a = stepAngle*i + (Math.random() - 0.5) * 0.5;
 			const h = 2995;
@@ -28,7 +27,6 @@ export const Mountains = function() {
 			container.position.x = Math.cos(a)*h;
 			container.rotation.z = a - Math.PI/2;
 			
-			// Modelo interno: solo rotación Y para variedad visual
 			const instance = modelTemplate.clone();
 			instance.rotation.y = Math.random() * Math.PI * 2;
 			
@@ -49,17 +47,17 @@ export const Mountains = function() {
 	
 	const loader = new GLTFLoader();
 
-	// Cargar montañas (Mountain.glb es ~10 unidades de ancho x 7 de alto)
+	// Montañas (reducidas de 47 a 33 objetos)
 	loader.load('assets/models/mountains/Mountain.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 35, 10, false); // Montañas normales
-		placeItems(gltf.scene, 12, 10, true);  // Montañas lejanas
+		placeItems(gltf.scene, 25, 10, false);
+		placeItems(gltf.scene, 8, 10, true);
 	});
 	
-	// Cargar volcanes (Volcano.glb es ~2 unidades, necesita mucha más escala)
+	// Volcanes (reducidos de 15 a 8 objetos)
 	loader.load('assets/models/mountains/Volcano.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 10, 80, false);  // Volcanes normales (escala alta porque el modelo es diminuto)
-		placeItems(gltf.scene, 5, 80, true);    // Volcanes lejanos
+		placeItems(gltf.scene, 6, 80, false);
+		placeItems(gltf.scene, 3, 80, true);
 	});
 };

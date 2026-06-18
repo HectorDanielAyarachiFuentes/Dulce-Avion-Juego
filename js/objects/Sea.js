@@ -34,12 +34,10 @@ export const Sea = function () {
 		this.waves.push(this.uniqueWaves[key]);
 	}
 
-	let mat = new THREE.MeshStandardMaterial({
+	let mat = new THREE.MeshPhongMaterial({
 		color: 0x5a9e3e, // Un verde césped natural
 		flatShading: true,
-		roughness: 0.7,       // Algo de suavidad para captar reflejos del entorno
-		metalness: 0.05,      // Apenas un toque metálico para que refleje la luz ambiente
-		envMapIntensity: 0.8, // Intensidad de los reflejos del entorno
+		shininess: 8,  // Brillo sutil para reflejos de luz sin costo de PBR
 	});
 
 	this.mesh = new THREE.Mesh(geom, mat);
