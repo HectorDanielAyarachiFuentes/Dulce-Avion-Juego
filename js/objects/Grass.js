@@ -20,20 +20,24 @@ export const Grass = function() {
 	const placeItems = (modelTemplate, count, baseScale) => {
 		const stepAngle = Math.PI * 2 / count;
 		for(let i=0; i<count; i++) {
-			const instance = modelTemplate.clone();
+			// Contenedor externo para la posición orbital
+			const container = new THREE.Object3D();
 			const a = stepAngle*i + (Math.random() - 0.5) * 1.5;
 			
-			instance.position.y = Math.sin(a)*h;
-			instance.position.x = Math.cos(a)*h;
-			instance.rotation.z = a - Math.PI/2;
-			instance.position.z = -500 + Math.random()*1000;
+			container.position.y = Math.sin(a)*h;
+			container.position.x = Math.cos(a)*h;
+			container.rotation.z = a - Math.PI/2;
+			container.position.z = -500 + Math.random()*1000;
 			
+			// Modelo interno: solo rotación Y para variedad
+			const instance = modelTemplate.clone();
 			instance.rotation.y = Math.random() * Math.PI * 2;
 			
 			const s = baseScale * (0.5 + Math.random() * 1.5);
 			instance.scale.set(s,s,s);
 			
-			self.mesh.add(instance);
+			container.add(instance);
+			self.mesh.add(container);
 		}
 	};
 	
