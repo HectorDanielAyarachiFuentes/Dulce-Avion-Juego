@@ -1,54 +1,51 @@
 /**
- * AI SUMMARY: Generates rock scenery for the world.
+ * AI SUMMARY: Generates rock scenery for the world using GLTF models.
  */
-import { Colors } from '../utils/colors.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-export const Rock = function() {
-	this.mesh = new THREE.Object3D();
-	
-	// A small rugged cylinder or box
-	const geom = new THREE.DodecahedronGeometry(5, 0); // Low poly rock
-	
-	const mat = new THREE.MeshPhongMaterial({
-		color: Colors.grey,
-		flatShading: true
+function setupModel(model) {
+	model.traverse(child => {
+		if (child.isMesh) {
+			child.castShadow = true;
+			child.receiveShadow = true;
+		}
 	});
-	
-	const mesh = new THREE.Mesh(geom, mat);
-	mesh.castShadow = true;
-	mesh.receiveShadow = true;
-	
-	// Flatten it slightly to look more like a rock lying on the ground
-	mesh.scale.set(1, 0.5 + Math.random() * 0.5, 1);
-	
-	this.mesh.add(mesh);
-};
+}
 
 export const Rocks = function() {
 	this.mesh = new THREE.Object3D();
-	this.nRocks = 50;
-	
-	const stepAngle = Math.PI * 2 / this.nRocks;
+	const self = this;
 	const h = 2998;
 	
-	for(let i=0; i<this.nRocks; i++) {
-		const rock = new Rock();
-		
-		const a = stepAngle*i + (Math.random() - 0.5) * 0.5;
-		
-		rock.mesh.position.y = Math.sin(a)*h;
-		rock.mesh.position.x = Math.cos(a)*h;
-		
-		rock.mesh.rotation.z = a - Math.PI/2;
-		rock.mesh.position.z = -500 + Math.random()*1000;
-		
-		// Randomize orientation
-		rock.mesh.rotation.x = Math.random() * Math.PI;
-		rock.mesh.rotation.y = Math.random() * Math.PI;
-		
-		const s = 0.5 + Math.random()*1.5;
-		rock.mesh.scale.set(s, s, s);
-		
-		this.mesh.add(rock.mesh);
-	}
+	const placeItems = (modelTemplate, count, baseScale) => {
+		const stepAngle = Math.PI * 2 / count;
+		for(let i=0; i<count; i++) {
+			const instance = modelTemplate.clone();
+			const a = stepAngle*i + (Math.random() - 0.5) * 0.5;
+			
+			instance.position.y = Math.sin(a)*h;
+			instance.position.x = Math.cos(a)*h;
+			instance.rotation.z = a - Math.PI/2;
+			instance.position.z = -500 + Math.random()*1000;
+			
+			instance.rotation.x = Math.random() * Math.PI;
+			instance.rotation.y = Math.random() * Math.PI;
+			
+			const s = baseScale * (0.5 + Math.random() * 1.5);
+			instance.scale.set(s,s,s);
+			
+			self.mesh.add(instance);
+		}
+	};
+	
+	const loader = new GLTFLoader();
+	
+	loader.load('assets/models/nature_kit/Rock Medium.glb', gltf => {
+		setupModel(gltf.scene);
+		placeItems(gltf.scene, 30, 4); 
+	});
+	loader.load('assets/models/nature_kit/Pebble Round.glb', gltf => {
+		setupModel(gltf.scene);
+		placeItems(gltf.scene, 20, 3); 
+	});
 };

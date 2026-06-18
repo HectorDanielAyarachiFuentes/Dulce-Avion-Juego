@@ -3,6 +3,19 @@
  */
 import { Colors } from '../utils/colors.js';
 import { Captive } from './Captive.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+let ufoModelTemplate = null;
+const loader = new GLTFLoader();
+loader.load('assets/models/flying_saucer.glb', function(gltf) {
+	ufoModelTemplate = gltf.scene;
+	ufoModelTemplate.traverse(function(child) {
+		if (child.isMesh) {
+			child.castShadow = true;
+			child.receiveShadow = true;
+		}
+	});
+});
 
 export const AlienLaser = function(x, y, z, vx = -15, vy = 0) {
 	this.mesh = new THREE.Object3D();
@@ -67,127 +80,50 @@ export const Ufo = function(type = 'basic') {
 	this.active = true;
 	this.type = type;
 	
-	// Partes que rotan (el plato metálico)
+	// Partes que rotan
 	this.rotatableParts = new THREE.Object3D();
 	
-	// Plato metálico
-	const diskGeom = new THREE.CylinderGeometry(15, 15, 4, 12);
-	let diskColor = Colors.grey;
-	if (type === 'bomber') diskColor = 0x333333;
-	if (type === 'kamikaze') diskColor = 0x883333;
-	const diskMat = new THREE.MeshPhongMaterial({ color: diskColor, flatShading: true });
-	const disk = new THREE.Mesh(diskGeom, diskMat);
-	
-	// Borde del plato con detalles
-	const ringGeom = new THREE.TorusGeometry(15, 1.5, 8, 12);
-	const ringMat = new THREE.MeshPhongMaterial({ color: 0x222222, flatShading: true });
-	const ring = new THREE.Mesh(ringGeom, ringMat);
-	ring.rotation.x = Math.PI / 2; // Acostar el toroide
-	
-	this.rotatableParts.add(disk);
-	this.rotatableParts.add(ring);
-	
-	// Cúpula de cristal
-	const domeGeom = new THREE.SphereGeometry(8, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-	let domeColor = Colors.green;
-	if (type === 'kamikaze') domeColor = Colors.red;
-	else if (type === 'bomber') domeColor = Colors.yellow;
-	const domeMat = new THREE.MeshPhongMaterial({ color: domeColor, transparent: true, opacity: 0.4, flatShading: true });
-	const dome = new THREE.Mesh(domeGeom, domeMat);
-	dome.position.y = 2;
-	
-	// --- TOQUE DE HUMOR: EL ALIEN PILOTO ---
-	const alien = new THREE.Object3D();
-	
-	// Cabeza del alien (verde claro)
-	const alienHeadGeom = new THREE.BoxGeometry(6, 5, 6);
-	const alienMat = new THREE.MeshPhongMaterial({ color: 0x7cfc00, flatShading: true }); 
-	const head = new THREE.Mesh(alienHeadGeom, alienMat);
-	
-	// Ojos saltones (blancos)
-	const eyeGeom = new THREE.SphereGeometry(1.5, 8, 8);
-	const eyeMat = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true });
-	const pupilGeom = new THREE.SphereGeometry(0.6, 8, 8);
-	const pupilMat = new THREE.MeshPhongMaterial({ color: 0x111111, flatShading: true });
-	
-	const rightEye = new THREE.Mesh(eyeGeom, eyeMat);
-	rightEye.position.set(1.6, 1, 2.5);
-	const rightPupil = new THREE.Mesh(pupilGeom, pupilMat);
-	rightPupil.position.set(0, 0, 1.1);
-	rightEye.add(rightPupil);
-	
-	const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
-	leftEye.position.set(-1.6, 1, 2.5);
-	const leftPupil = new THREE.Mesh(pupilGeom, pupilMat);
-	leftPupil.position.set(0, 0, 1.1);
-	leftEye.add(leftPupil);
-	
-	// Expresiones humorísticas según tipo
-	if (type === 'kamikaze') {
-		// Ojos de loco (bizcos) y cejas fruncidas
-		rightPupil.position.set(-0.5, 0, 1.1);
-		leftPupil.position.set(0.5, 0, 1.1);
-		const browGeom = new THREE.BoxGeometry(2.5, 0.8, 0.5);
-		const rightBrow = new THREE.Mesh(browGeom, pupilMat);
-		rightBrow.position.set(1.5, 2.2, 2.8);
-		rightBrow.rotation.z = -0.4;
-		const leftBrow = new THREE.Mesh(browGeom, pupilMat);
-		leftBrow.position.set(-1.5, 2.2, 2.8);
-		leftBrow.rotation.z = 0.4;
-		head.add(rightBrow);
-		head.add(leftBrow);
-	} else if (type === 'bomber') {
-		// Alien gordo y perezoso
-		head.scale.set(1.3, 0.8, 1.3); 
-		rightPupil.position.y = -0.5;
-		leftPupil.position.y = -0.5;
+	if (ufoModelTemplate) {
+		const model = ufoModelTemplate.clone();
+		
+		// Ajuste de escala a un punto intermedio, para que no sea ni gigante ni diminuto
+		model.scale.setScalar(0.6); 
+		
+		// Diferenciación de tamaño por tipo
+		if (type === 'kamikaze') {
+			model.scale.setScalar(0.4);
+		} else if (type === 'bomber') {
+			model.scale.setScalar(0.9);
+		}
+		
+		this.rotatableParts.add(model);
+	} else {
+		// Fallback simple si aún no carga
+		const diskGeom = new THREE.CylinderGeometry(15, 15, 4, 12);
+		const diskMat = new THREE.MeshPhongMaterial({ color: Colors.grey, flatShading: true });
+		const disk = new THREE.Mesh(diskGeom, diskMat);
+		this.rotatableParts.add(disk);
 	}
 	
-	head.add(rightEye);
-	head.add(leftEye);
-	
-	// Antenita graciosa
-	const antennaGeom = new THREE.CylinderGeometry(0.15, 0.15, 3);
-	this.antennaBase = new THREE.Mesh(antennaGeom, ringMat);
-	this.antennaBase.position.set(0, 3.5, 0);
-	const bulbGeom = new THREE.SphereGeometry(0.8, 8, 8);
-	const bulbMat = new THREE.MeshPhongMaterial({ color: domeColor }); 
-	this.antennaBulb = new THREE.Mesh(bulbGeom, bulbMat);
-	this.antennaBulb.position.y = 1.5;
-	this.antennaBase.add(this.antennaBulb);
-	head.add(this.antennaBase);
-	
-	alien.add(head);
-	alien.position.y = 2.5;
-	alien.rotation.y = -Math.PI / 2; // Mirando siempre hacia la izquierda (al jugador)
-	
 	this.mesh.add(this.rotatableParts);
-	this.mesh.add(alien);
-	this.mesh.add(dome);
-	
 	this.mesh.position.z = 0; // Todos en el mismo plano Z
 	this.angle = Math.random() * Math.PI * 2;
 	
 	if (type === 'kamikaze') {
 		this.hitPoints = 1;
 		this.speedX = -5 - Math.random() * 4; // Muy rápidos
-		// Los kamikazes pueden aparecer de repente, pero lo hacen cayendo desde muy arriba
 		this.mesh.position.x = 250 + Math.random() * 100;
 		this.mesh.position.y = 150 + Math.random() * 50; 
-		this.mesh.scale.set(0.6, 0.6, 0.6); // Más pequeños
 		this.captive = null; 
 	} else if (type === 'bomber') {
 		this.hitPoints = 6; 
 		this.speedX = -1.5 - Math.random() * 1; 
-		// Vuelo natural, entran desde bien a la derecha
 		this.mesh.position.x = 350 + Math.random() * 100;
 		this.mesh.position.y = 100 + Math.random() * 100; 
-		this.mesh.scale.set(1.5, 1.5, 1.5); // Más grandes
 		this.captive = null;
 	} else {
 		this.hitPoints = 3;
 		this.speedX = -2.5 - Math.random() * 3;
-		// Vuelo natural
 		this.mesh.position.x = 350 + Math.random() * 100;
 		this.mesh.position.y = 20 + Math.random() * 120;
 		if (Math.random() < 0.3) {

@@ -35,9 +35,7 @@ export const Sea = function () {
 	}
 
 	let mat = new THREE.MeshPhongMaterial({
-		color: Colors.green,
-		transparent: true,
-		opacity: .8,
+		color: 0x649e49, // Un verde césped más natural
 		flatShading: true,
 	});
 
