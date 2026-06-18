@@ -2,6 +2,7 @@
  * AI SUMMARY: Defines the Sky object with moving clouds, sun, and moon.
  */
 import { Colors } from '../utils/colors.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const Cloud = function () {
 	// Create an empty container that will hold the different parts of the cloud
@@ -69,62 +70,31 @@ export const Sky = function () {
 	}
 
 	// === EL SOL ===
-	const sunMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
-	const sunGeom = new THREE.IcosahedronGeometry(60, 1); // Aspecto más low-poly
-	this.sun = new THREE.Mesh(sunGeom, sunMat);
-	
-	// Rayos del sol (pirámides alargadas)
-	const rayGeom = new THREE.ConeGeometry(15, 60, 4); 
-	rayGeom.translate(0, 80, 0); // Desplaza los rayos hacia afuera del centro
-	for(let i=0; i<8; i++){
-		const ray = new THREE.Mesh(rayGeom, sunMat);
-		ray.rotation.z = i * (Math.PI*2/8);
-		this.sun.add(ray);
-	}
-
-	// Halo brillante
-	const haloGeom = new THREE.IcosahedronGeometry(100, 1);
-	const haloMat = new THREE.MeshBasicMaterial({ color: 0xff9900, transparent: true, opacity: 0.3 });
-	const halo = new THREE.Mesh(haloGeom, haloMat);
-	this.sun.add(halo);
-
+	this.sun = new THREE.Object3D();
 	this.sun.position.set(-300, 350, -1200); // Arriba a la izquierda, muy al fondo
 	this.celestials.add(this.sun);
 
 	// === LA LUNA ===
 	this.moon = new THREE.Object3D();
-	
-	const moonGeom = new THREE.IcosahedronGeometry(50, 1);
-	this.moonMat = new THREE.MeshBasicMaterial({ color: 0xeef4f5 });
-	const moonCore = new THREE.Mesh(moonGeom, this.moonMat);
-	this.moon.add(moonCore);
-
-	// Cráteres low-poly
-	const craterGeom = new THREE.CylinderGeometry(8, 8, 4, 6);
-	const craterMat = new THREE.MeshBasicMaterial({ color: 0xbac1c4 });
-	
-	// Posiciones manuales para que se vean bien
-	const positions = [
-		{x: 15, y: 15, z: 44},
-		{x: -20, y: 5, z: 43},
-		{x: 5, y: -25, z: 42},
-		{x: -15, y: -15, z: 45}
-	];
-	
-	positions.forEach(pos => {
-		const crater = new THREE.Mesh(craterGeom, craterMat);
-		crater.position.set(pos.x, pos.y, pos.z);
-		crater.lookAt(new THREE.Vector3(0,0,0)); // Los cráteres miran hacia el centro de la luna
-		this.moon.add(crater);
-	});
-
-	// Halo lunar
-	const moonHaloGeom = new THREE.IcosahedronGeometry(80, 1);
-	const moonHaloMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
-	const moonHalo = new THREE.Mesh(moonHaloGeom, moonHaloMat);
-	this.moon.add(moonHalo);
-
 	this.moon.position.set(300, 350, -1200); // Arriba a la derecha
 	this.moon.visible = false; // Oculta de día
 	this.celestials.add(this.moon);
+
+	const loader = new GLTFLoader();
+
+	// Cargar Sol
+	loader.load('assets/models/astros/Sun.glb', gltf => {
+		const model = gltf.scene;
+		// Puedes ajustar la escala aquí si el modelo es muy grande o pequeño
+		model.scale.set(50, 50, 50); 
+		this.sun.add(model);
+	});
+
+	// Cargar Luna
+	loader.load('assets/models/astros/Moon.glb', gltf => {
+		const model = gltf.scene;
+		// Puedes ajustar la escala aquí si el modelo es muy grande o pequeño
+		model.scale.set(50, 50, 50);
+		this.moon.add(model);
+	});
 };

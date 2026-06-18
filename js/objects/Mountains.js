@@ -48,17 +48,28 @@ export const Mountains = function() {
 	
 	const loader = new GLTFLoader();
 	
+	const createFixedWrapper = (scene) => {
+		// Algunos modelos 3D vienen "acostados" porque usan un eje diferente para indicar Arriba.
+		// Los envolvemos y rotamos 90 grados para que se paren correctamente.
+		const wrapper = new THREE.Object3D();
+		scene.rotation.x = -Math.PI / 2; // Cambiar a Math.PI/2 si quedan completamente boca abajo
+		wrapper.add(scene);
+		return wrapper;
+	};
+
 	// Cargar montañas
 	loader.load('assets/models/mountains/Mountain.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 30, 8, false); // Montañas normales
-		placeItems(gltf.scene, 10, 8, true);  // Montañas lejanas
+		const wrapper = createFixedWrapper(gltf.scene);
+		placeItems(wrapper, 30, 8, false); // Montañas normales
+		placeItems(wrapper, 10, 8, true);  // Montañas lejanas
 	});
 	
 	// Cargar volcanes
 	loader.load('assets/models/mountains/Volcano.glb', gltf => {
 		setupModel(gltf.scene);
-		placeItems(gltf.scene, 20, 12, false); // Volcanes normales (más cantidad y escala para que se vean)
-		placeItems(gltf.scene, 10, 12, true);   // Volcanes lejanos
+		// El volcán original ya estaba bien orientado, así que no usamos el wrapper
+		placeItems(gltf.scene, 20, 12, false); 
+		placeItems(gltf.scene, 10, 12, true);   
 	});
 };

@@ -97,19 +97,15 @@ export const LevelManager = {
 			if (GameState.currentLevel === 1) {
 				sky.sun.visible = true;
 				sky.moon.visible = false;
-				sky.sun.material.color.setHex(0xffd700);
 			} else if (GameState.currentLevel === 2) {
 				sky.sun.visible = true;
 				sky.moon.visible = false;
-				sky.sun.material.color.setHex(0xff5500);
 			} else if (GameState.currentLevel === 3) {
 				sky.sun.visible = false;
 				sky.moon.visible = true;
-				if (sky.moonMat) sky.moonMat.color.setHex(0xeef4f5);
 			} else if (GameState.currentLevel === 4) {
 				sky.sun.visible = false;
 				sky.moon.visible = true;
-				if (sky.moonMat) sky.moonMat.color.setHex(0x8899aa);
 			}
 		}
 		
