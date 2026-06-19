@@ -35,7 +35,7 @@ export const Sea = function () {
 	}
 
 	let mat = new THREE.MeshPhongMaterial({
-		color: 0xc2a077, // Warm autumnal ground to match sunset
+		color: 0x5a9e3e, // Verde césped
 		flatShading: true,
 		shininess: 8,  // Brillo sutil para reflejos de luz sin costo de PBR
 	});

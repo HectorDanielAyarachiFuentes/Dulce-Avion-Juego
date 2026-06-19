@@ -55,12 +55,12 @@ export const LevelManager = {
 		const { scene, ambientLight, hemisphereLight, sky, rain } = this.context;
 		
 		if (GameState.currentLevel === 1) { // Día Claro
-			aviator.style.background = 'linear-gradient(#3b5764, #739aaf)';
-			scene.fog.color.setHex(0xf7d9aa);
-			ambientLight.color.setHex(0xdc8874);
+			aviator.style.background = 'linear-gradient(#3279a8, #7bc5ed)';
+			scene.fog.color.setHex(0x7bc5ed);
+			ambientLight.color.setHex(0xffffff);
 			ambientLight.intensity = 0.5;
 			hemisphereLight.intensity = 0.9;
-			if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x3b5764);
+			if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x3279a8);
 		} 
 		else if (GameState.currentLevel === 2) { // Atardecer
 			aviator.style.background = 'linear-gradient(#e44d2e, #f2a878)';
@@ -70,12 +70,12 @@ export const LevelManager = {
 			hemisphereLight.intensity = 0.6;
 		} 
 		else if (GameState.currentLevel === 3) { // Noche Oscura
-			aviator.style.background = 'linear-gradient(#08131a, #1a2a36)';
-			scene.fog.color.setHex(0x1a2a36);
+			aviator.style.background = 'linear-gradient(#05182e, #143759)'; // Azul más profundo y notorio
+			scene.fog.color.setHex(0x143759);
 			ambientLight.color.setHex(0x555577);
 			ambientLight.intensity = 0.3;
 			hemisphereLight.intensity = 0.3;
-			if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x08131a);
+			if (HUD.updateMiniPlaneBgColor) HUD.updateMiniPlaneBgColor(0x05182e);
 		} 
 		else if (GameState.currentLevel === 4) { // Tormenta
 			aviator.style.background = 'linear-gradient(#111111, #333333)';
