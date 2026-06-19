@@ -13,12 +13,12 @@ export const Mothership = function() {
 	loader.load('assets/models/Flying saucer.glb', (gltf) => {
 		const model = gltf.scene;
 		
-		// Auto escalar a ~400 de ancho (equivalente al radio 200 del modelo viejo)
+		// Auto escalar a ~180 de ancho para que no ocupe toda la pantalla
 		const box = new THREE.Box3().setFromObject(model);
 		const size = new THREE.Vector3();
 		box.getSize(size);
 		const maxDim = Math.max(size.x, size.z);
-		const scale = 400 / maxDim;
+		const scale = 180 / maxDim;
 		model.scale.setScalar(scale);
 		
 		model.traverse((child) => {
@@ -62,17 +62,8 @@ export const Mothership = function() {
 	this.attackTimer = 0;
 	this.attackState = "idle"; // idle, sweeping, swarming, deathray
 	
-	// Death Ray Mesh (ahora apunta a la izquierda, hacia el jugador)
-	const rayGeom = new THREE.CylinderGeometry(50, 50, 2000, 32);
-	rayGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2)); // Girar para que dispare en X
-	rayGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(-1000, 0, 0)); // Mover el centro del rayo
-	this.rayMat = new THREE.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0, fog: false });
-	this.deathRay = new THREE.Mesh(rayGeom, this.rayMat);
-	this.deathRay.position.x = -50;
-	this.mesh.add(this.deathRay);
-	
-	// Hitbox for collisions (radius 200 * 1.5 = 300)
-	this.hitboxRadiusSq = (300) * (300); 
+	// Hitbox for collisions 
+	this.hitboxRadiusSq = (120) * (120); 
 };
 
 Mothership.prototype.startBossFight = function(skipIntro = false) {
@@ -85,7 +76,6 @@ Mothership.prototype.startBossFight = function(skipIntro = false) {
 		this.mesh.position.set(150, 100, -50);
 		this.mesh.rotation.z = -0.2;
 		this.mesh.rotation.x = 0.2;
-		this.deathRay.material.opacity = 0;
 	} else {
 		this.state = "intro";
 		this.introTimer = 0;
@@ -149,8 +139,6 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		
 		if (this.attackState === "idle") {
 			this.mesh.rotation.x *= 0.95;
-			this.ring.rotation.z -= 0.02;
-			this.rayMat.opacity = 0;
 			
 			if (this.attackTimer > 100) {
 				this.attackTimer = 0;
@@ -193,25 +181,32 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 			}
 		}
 		else if (this.attackState === "deathray") {
-			// Carga y dispara el Rayo de la Muerte
-			if (this.attackTimer < 100) {
-				// Carga: anillo gira brutalmente, luz roja
-				this.ring.rotation.z -= 0.1;
+			// Cambiado de un rayo a una ráfaga (barrage) de lásers hacia el jugador
+			if (this.attackTimer < 80) {
+				// Carga: luz roja intensa
 				this.engineLight.material.color.setHex(0xff0000);
-				pulse = this.attackTimer / 100;
-			} else if (this.attackTimer < 250) {
-				// Disparo
-				this.rayMat.opacity = 0.8 + Math.random() * 0.2;
-				this.engineLight.material.color.setHex(0xffffff);
+				pulse = this.attackTimer / 80;
+			} else if (this.attackTimer < 200) {
+				// Disparo múltiple en abanico
+				this.engineLight.material.color.setHex(0xffaa00);
 				pulse = 1.0;
-				// El rayo barre ligeramente moviendo el angulo
-				this.mesh.rotation.z = -0.2 + Math.sin(this.attackTimer * 0.05) * 0.1;
+				
+				if (enemyManager && this.attackTimer % 8 === 0) {
+					const bx = this.mesh.position.x - 50;
+					const by = this.mesh.position.y;
+					
+					// Disparos en abanico vertical hacia el jugador
+					const angleY = (Math.random() - 0.5) * 8; 
+					enemyManager.shootBossLaser(bx, by, this.mesh.position.z, -18, angleY);
+				}
+				
+				// El platillo se sacude mientras dispara
+				this.mesh.rotation.z = -0.2 + Math.sin(this.attackTimer * 0.5) * 0.05;
 			} else {
 				// Recuperación
-				this.rayMat.opacity = 0;
 				this.engineLight.material.color.setHex(0x00ff00);
 				this.attackState = "idle";
-				this.attackTimer = -100; // Cooldown largo después del rayo
+				this.attackTimer = -50; 
 			}
 		}
 	}
@@ -219,7 +214,6 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		this.mesh.position.y -= 2; // Cae al vacío
 		this.mesh.rotation.x += 0.01;
 		this.mesh.rotation.z += 0.02;
-		this.rayMat.opacity = 0;
 		pulse = Math.random() > 0.5 ? 1 : 0; // Parpadeo roto
 	}
 	
@@ -248,5 +242,4 @@ Mothership.prototype.reset = function() {
 	
 	this.mesh.position.set(-800, 800, -6000);
 	this.mesh.rotation.set(0.2, 0, -0.1);
-	if (this.rayMat) this.rayMat.opacity = 0;
 };
