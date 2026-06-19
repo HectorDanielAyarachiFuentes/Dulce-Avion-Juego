@@ -4,6 +4,16 @@
   "structure": {
     "index.html": "Main HTML file. Loads stylesheets and provides the container for the WebGL canvas and UI.",
     "style.css": "Game styling, UI overlays, menus, and typography.",
+    "favicon.svg": "Game favicon.",
+    "assets/": {
+      "models/": {
+        "Airplane.glb": "3D model for the player's airplane.",
+        "flying_saucer.glb": "3D model for the alien mothership/boss.",
+        "astros/": "3D models for astronomical objects (e.g. moon, planets).",
+        "mountains/": "3D models for mountain scenery.",
+        "nature_kit/": "3D models for nature scenery (trees, rocks, grass, etc.)."
+      }
+    },
     "libs/": {
       "three.module.min.js": "Three.js core library (ES Module format).",
       "three.core.min.js": "Three.js internal core logic (required by the module)."
@@ -24,6 +34,8 @@
         "Airplane.js": "Player character model and animation logic.",
         "Weapons.js": "Weapon systems, bullets, and firing mechanics.",
         "Enemies.js": "Enemy spawning, enemy types (basic, boss), and collision logic.",
+        "Eagle.js": "Defines eagle obstacles/enemies.",
+        "BackgroundBattle.js": "Background battle effect with alien and allied fighters, lasers, and a nuclear explosion effect.",
         "Sea.js": "The rotating planet/sea that acts as the ground.",
         "Sky.js": "Skybox logic, clouds, sun, and moon.",
         "Forest.js": "Tree scenery generator.",
