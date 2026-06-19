@@ -1,90 +1,46 @@
 import * as THREE from '../../libs/three.module.min.js';
 import { Colors } from '../utils/colors.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const Mothership = function() {
 	this.mesh = new THREE.Object3D();
 	
-	// Plato principal (Saucer)
-	const saucerGeom = new THREE.CylinderGeometry(200, 200, 40, 32);
-	saucerGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0));
-	const saucerMat = new THREE.MeshPhongMaterial({ color: 0x111111, flatShading: true, fog: false });
-	const saucer = new THREE.Mesh(saucerGeom, saucerMat);
+	// Modelo 3D del platillo
+	this.saucerModel = new THREE.Object3D();
+	this.mesh.add(this.saucerModel);
 	
-	// Cúpula superior
-	const domeGeom = new THREE.SphereGeometry(100, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-	const domeMat = new THREE.MeshPhongMaterial({ color: 0x222222, flatShading: true, fog: false });
-	const dome = new THREE.Mesh(domeGeom, domeMat);
-	dome.position.y = 20;
+	const loader = new GLTFLoader();
+	loader.load('assets/models/Flying saucer.glb', (gltf) => {
+		const model = gltf.scene;
+		
+		// Auto escalar a ~400 de ancho (equivalente al radio 200 del modelo viejo)
+		const box = new THREE.Box3().setFromObject(model);
+		const size = new THREE.Vector3();
+		box.getSize(size);
+		const maxDim = Math.max(size.x, size.z);
+		const scale = 400 / maxDim;
+		model.scale.setScalar(scale);
+		
+		model.traverse((child) => {
+			if (child.isMesh) {
+				child.material.flatShading = true;
+			}
+		});
+		
+		this.saucerModel.add(model);
+	});
 	
-	// Anillo de luces
-	const ringGeom = new THREE.TorusGeometry(205, 5, 8, 32);
-	const ringMat = new THREE.MeshBasicMaterial({ color: Colors.green, fog: false });
-	this.ring = new THREE.Mesh(ringGeom, ringMat);
-	this.ring.rotation.x = Math.PI / 2;
+	// Objetos dummy para evitar crashes en el update() (el viejo platillo los usaba)
+	this.ring = new THREE.Object3D(); 
+	this.portholes = [];
+	this.antennaBulb = null;
 	
-	// Propulsor inferior
-	const engineGeom = new THREE.CylinderGeometry(80, 50, 40, 16);
-	const engineMat = new THREE.MeshPhongMaterial({ color: 0x050505, flatShading: true, fog: false });
-	const engine = new THREE.Mesh(engineGeom, engineMat);
-	engine.position.y = -30;
-	
-	// Luz del motor inferior
+	// Luz del motor inferior (para animaciones del rayo de la muerte)
 	const engineLightGeom = new THREE.CylinderGeometry(70, 40, 42, 16);
 	const engineLightMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.6, fog: false });
 	this.engineLight = new THREE.Mesh(engineLightGeom, engineLightMat);
 	this.engineLight.position.y = -30;
-
-	// Antena superior
-	const antennaBaseGeom = new THREE.CylinderGeometry(5, 5, 20, 8);
-	const antennaBaseMat = new THREE.MeshPhongMaterial({ color: 0x555555, flatShading: true });
-	const antennaBase = new THREE.Mesh(antennaBaseGeom, antennaBaseMat);
-	antennaBase.position.y = 100;
-	dome.add(antennaBase);
-	
-	const antennaGeom = new THREE.CylinderGeometry(1, 1, 50, 4);
-	const antennaMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
-	const antenna = new THREE.Mesh(antennaGeom, antennaMat);
-	antenna.position.y = 125;
-	dome.add(antenna);
-	
-	const antennaBulbGeom = new THREE.SphereGeometry(6, 8, 8);
-	const antennaBulbMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-	this.antennaBulb = new THREE.Mesh(antennaBulbGeom, antennaBulbMat);
-	this.antennaBulb.position.y = 150;
-	dome.add(this.antennaBulb);
-
-	// Ventanas / Ojos de buey (Portholes) alrededor del plato
-	const portholeGeom = new THREE.SphereGeometry(10, 8, 8);
-	const portholeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-	this.portholes = [];
-	for (let i = 0; i < 16; i++) {
-		const angle = (i / 16) * Math.PI * 2;
-		const porthole = new THREE.Mesh(portholeGeom, portholeMat);
-		// Posicionar en el borde del platillo (radio 200)
-		porthole.position.set(Math.cos(angle) * 195, 0, Math.sin(angle) * 195);
-		// Achatar para que parezca una ventana ovalada en el borde
-		porthole.scale.set(1, 0.5, 1);
-		saucer.add(porthole);
-		this.portholes.push(porthole);
-	}
-
-	// Cañones laterales apuntando hacia adelante (izquierda, -X)
-	const cannonGeom = new THREE.CylinderGeometry(8, 6, 60, 8);
-	cannonGeom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2)); // Apuntar a lo largo de X
-	const cannonMat = new THREE.MeshPhongMaterial({ color: 0x333333, flatShading: true });
-	
-	const cannon1 = new THREE.Mesh(cannonGeom, cannonMat);
-	cannon1.position.set(-180, -10, 50); // Lado izquierdo, un poco hacia atrás
-	saucer.add(cannon1);
-	
-	const cannon2 = new THREE.Mesh(cannonGeom, cannonMat);
-	cannon2.position.set(-180, -10, -50); 
-	saucer.add(cannon2);
-
-	this.mesh.add(saucer);
-	this.mesh.add(dome);
-	this.mesh.add(this.ring);
-	this.mesh.add(engine);
+	this.engineLight.visible = false; // Lo ocultamos para que no tape el modelo
 	this.mesh.add(this.engineLight);
 	
 	// Scale massive but fits on screen better
@@ -272,6 +228,11 @@ Mothership.prototype.update = function(time, level = 1, enemyManager = null) {
 		// El anillo verde parpadea como patrón de luces (si no está cargando el rayo)
 		if (this.attackState !== "deathray") {
 			this.ring.rotation.z -= 0.005;
+		}
+		
+		// Hace que el platillo gire constantemente sobre su eje
+		if (this.saucerModel) {
+			this.saucerModel.rotation.y -= 0.03;
 		}
 	}
 };
