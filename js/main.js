@@ -50,6 +50,8 @@ function createSky() {
 	sky = new Sky();
 	sky.mesh.position.y = -3000;
 	scene.add(sky.mesh);
+	
+	sky.celestials.position.y = -3000;
 	scene.add(sky.celestials);
 }
 
@@ -212,8 +214,12 @@ function loop() {
 	mountains.mesh.rotation.z += GameState.gameSpeed;
 	sky.mesh.rotation.z += GameState.gameSpeed * 2;
 	if (sky.celestials) {
-		sky.sun.rotation.z += GameState.gameSpeed;
-		sky.moon.rotation.y += GameState.gameSpeed;
+		let targetAngle = 0;
+		if (GameState.currentLevel === 1) targetAngle = 0; // Día: Sol arriba
+		else if (GameState.currentLevel === 2) targetAngle = -0.7; // Atardecer: Sol bajando
+		else if (GameState.currentLevel >= 3) targetAngle = -2.9; // Noche/Tormenta: Luna en esquina superior izquierda (sin salirse)
+		
+		sky.celestials.rotation.z += (targetAngle - sky.celestials.rotation.z) * 0.01;
 	}
 	grass.mesh.rotation.z += GameState.gameSpeed;
 	rocks.mesh.rotation.z += GameState.gameSpeed;

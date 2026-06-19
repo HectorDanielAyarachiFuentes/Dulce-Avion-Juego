@@ -94,19 +94,7 @@ export const LevelManager = {
 		}
 
 		if (sky && sky.sun && sky.moon) {
-			if (GameState.currentLevel === 1) {
-				sky.sun.visible = true;
-				sky.moon.visible = false;
-			} else if (GameState.currentLevel === 2) {
-				sky.sun.visible = true;
-				sky.moon.visible = false;
-			} else if (GameState.currentLevel === 3) {
-				sky.sun.visible = false;
-				sky.moon.visible = true;
-			} else if (GameState.currentLevel === 4) {
-				sky.sun.visible = false;
-				sky.moon.visible = true;
-			}
+			// Sol y Luna ahora orbitan para entrar y salir de escena, no se ocultan de golpe.
 		}
 		
 		import('../utils/audio.js').then(({ startRainSound, stopRainSound }) => {

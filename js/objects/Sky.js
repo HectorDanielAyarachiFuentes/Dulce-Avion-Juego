@@ -66,13 +66,29 @@ export const Sky = function () {
 
 	// === EL SOL ===
 	this.sun = new THREE.Object3D();
-	this.sun.position.set(-300, 350, -1200); // Arriba a la izquierda, muy al fondo
+	this.sun.position.set(0, 3600, -1500); // Más alejado en el fondo
 	this.celestials.add(this.sun);
+	
+	// Crear un efecto de halo brillante para el sol
+	const haloCanvas = document.createElement('canvas');
+	haloCanvas.width = 256;
+	haloCanvas.height = 256;
+	const hCtx = haloCanvas.getContext('2d');
+	const gradient = hCtx.createRadialGradient(128, 128, 20, 128, 128, 128);
+	gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+	gradient.addColorStop(0.3, 'rgba(255, 220, 100, 0.4)');
+	gradient.addColorStop(1, 'rgba(255, 200, 50, 0)');
+	hCtx.fillStyle = gradient;
+	hCtx.fillRect(0, 0, 256, 256);
+	const haloTexture = new THREE.CanvasTexture(haloCanvas);
+	const haloMat = new THREE.SpriteMaterial({ map: haloTexture, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+	const sunHalo = new THREE.Sprite(haloMat);
+	sunHalo.scale.set(1200, 1200, 1); // Tamaño del halo
+	this.sun.add(sunHalo);
 
 	// === LA LUNA ===
 	this.moon = new THREE.Object3D();
-	this.moon.position.set(300, 350, -1200); // Arriba a la derecha
-	this.moon.visible = false; // Oculta de día
+	this.moon.position.set(0, -3600, -1500); // Exactamente opuesto al sol y alejada
 	this.celestials.add(this.moon);
 
 	const loader = new GLTFLoader();
@@ -80,7 +96,7 @@ export const Sky = function () {
 	// Cargar Sol
 	loader.load('assets/models/astros/Sun.glb', gltf => {
 		const model = gltf.scene;
-		model.scale.set(10, 10, 10); 
+		model.scale.set(120, 120, 120); 
 		model.traverse(child => {
 			if (child.isMesh) {
 				child.material.fog = false; // El sol siempre brilla
@@ -92,7 +108,7 @@ export const Sky = function () {
 	// Cargar Luna
 	loader.load('assets/models/astros/Moon.glb', gltf => {
 		const model = gltf.scene;
-		model.scale.set(10, 10, 10);
+		model.scale.set(3, 3, 3);
 		model.traverse(child => {
 			if (child.isMesh) {
 				child.material.fog = false; // La niebla no oculta la luna
