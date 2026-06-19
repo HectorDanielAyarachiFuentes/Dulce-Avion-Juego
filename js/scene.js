@@ -8,7 +8,7 @@ export function createScene() {
 	WIDTH = window.innerWidth;
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
+	scene.fog = new THREE.Fog(0xf5d3b3, 100, 950);
 
 	aspectRatio = WIDTH / HEIGHT;
 	fieldOfView = 60;

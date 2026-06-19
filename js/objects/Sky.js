@@ -5,41 +5,36 @@ import { Colors } from '../utils/colors.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const Cloud = function () {
-	// Create an empty container that will hold the different parts of the cloud
 	this.mesh = new THREE.Object3D();
 
-	// create a cube geometry;
-	// this shape will be duplicated to create the cloud
 	const geom = new THREE.BoxGeometry(20, 20, 20);
 
-	// create a material; a simple white material will do the trick
 	const mat = new THREE.MeshPhongMaterial({
-		color: Colors.white,
+		color: 0xffeedd, // Warm tint
+		flatShading: true
 	});
 
-	// duplicate the geometry a random number of times
-	const nBlocs = 3 + Math.floor(Math.random() * 3);
+	const nBlocs = 3 + Math.floor(Math.random() * 4);
 	for (let i = 0; i < nBlocs; i++) {
-
-		// create the mesh by cloning the geometry
 		const m = new THREE.Mesh(geom, mat);
 
-		// set the position and the rotation of each cube randomly
 		m.position.x = i * 15;
-		m.position.y = Math.random() * 10;
+		m.position.y = Math.random() * 5; 
 		m.position.z = Math.random() * 10;
-		m.rotation.z = Math.random() * Math.PI * 2;
-		m.rotation.y = Math.random() * Math.PI * 2;
+		
+		// No rotation to keep them perfectly flat and aligned, mimicking low-poly stylized clouds
+		m.rotation.z = 0;
+		m.rotation.y = 0;
 
-		// set the size of the cube randomly
-		const s = .1 + Math.random() * .9;
-		m.scale.set(s, s, s);
+		// scale: flat and wide
+		const scaleWidth = 0.5 + Math.random() * 1.5;
+		const scaleHeight = 0.2 + Math.random() * 0.3;
+		const scaleDepth = 0.5 + Math.random() * 1.5;
+		m.scale.set(scaleWidth, scaleHeight, scaleDepth);
 
-		// allow each cube to cast and to receive shadows
 		m.castShadow = true;
 		m.receiveShadow = true;
 
-		// add the cube to the container we first created
 		this.mesh.add(m);
 	}
 };
