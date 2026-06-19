@@ -3,7 +3,7 @@
  * OPTIMIZADO EXTREMO: Usa THREE.InstancedMesh para renderizar miles de árboles con 1 solo draw call.
  */
 
-export const Forest = function() {
+export const Forest = function(lakesObj) {
 	this.mesh = new THREE.Object3D();
 	const self = this;
 	const h = 2995; 
@@ -51,9 +51,18 @@ export const Forest = function() {
 		const stepAngle = Math.PI * 2 / countPerPalette;
 		
 		for(let i=0; i<countPerPalette; i++) {
-			const a = stepAngle*i + (Math.random() - 0.5) * 0.5;
+			let a = stepAngle*i + (Math.random() - 0.5) * 0.5;
+			let zPos = -500 + Math.random()*1000;
 			
-			dummy.position.set(Math.cos(a)*h, Math.sin(a)*h, -500 + Math.random()*1000);
+			// Si cae en un lago, intentamos moverlo un poco
+			let tries = 5;
+			while (lakesObj && lakesObj.isInside(a, zPos, 15) && tries > 0) {
+				a += 0.05;
+				zPos = -500 + Math.random()*1000;
+				tries--;
+			}
+			
+			dummy.position.set(Math.cos(a)*h, Math.sin(a)*h, zPos);
 			dummy.rotation.set(0, 0, a - Math.PI/2); // Orbital rotation
 			dummy.rotateY(Math.random() * Math.PI * 2); // Local Y rotation
 			

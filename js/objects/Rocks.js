@@ -3,7 +3,7 @@
  * OPTIMIZADO EXTREMO: Usa THREE.InstancedMesh.
  */
 
-export const Rocks = function() {
+export const Rocks = function(lakesObj) {
 	this.mesh = new THREE.Object3D();
 	const self = this;
 	const h = 2998;
@@ -25,9 +25,17 @@ export const Rocks = function() {
 	const stepAngle = Math.PI * 2 / count;
 
 	for(let i=0; i<count; i++) {
-		const a = stepAngle*i + (Math.random() - 0.5) * 0.5;
+		let a = stepAngle*i + (Math.random() - 0.5) * 0.5;
+		let zPos = -500 + Math.random()*1000;
 		
-		dummy.position.set(Math.cos(a)*h, Math.sin(a)*h, -500 + Math.random()*1000);
+		let tries = 5;
+		while (lakesObj && lakesObj.isInside(a, zPos, 15) && tries > 0) {
+			a += 0.1;
+			zPos = -500 + Math.random()*1000;
+			tries--;
+		}
+		
+		dummy.position.set(Math.cos(a)*h, Math.sin(a)*h, zPos);
 		dummy.rotation.set(0, 0, a - Math.PI/2);
 		
 		dummy.rotateX(Math.random() * Math.PI);

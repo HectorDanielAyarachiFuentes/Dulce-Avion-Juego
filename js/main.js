@@ -67,19 +67,19 @@ function createLakes() {
 }
 
 function createForest() {
-	forest = new Forest();
+	forest = new Forest(lakes);
 	forest.mesh.position.y = -3000;
 	scene.add(forest.mesh);
 }
 
 function createGrass() {
-	grass = new Grass();
+	grass = new Grass(lakes);
 	grass.mesh.position.y = -3000;
 	scene.add(grass.mesh);
 }
 
 function createRocks() {
-	rocks = new Rocks();
+	rocks = new Rocks(lakes);
 	rocks.mesh.position.y = -3000;
 	scene.add(rocks.mesh);
 }
