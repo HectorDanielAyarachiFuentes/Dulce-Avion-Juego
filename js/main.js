@@ -319,7 +319,7 @@ function loop() {
 					document.getElementById('welcome-screen').classList.remove('hidden');
 					document.body.classList.remove('playing');
 					LevelManager.resetGame();
-					return; // Salir del frame inmediatamente
+					break; // Salir del bucle, pero mantener el render loop
 				}
 			}
 		}
@@ -341,7 +341,7 @@ function loop() {
 					document.getElementById('welcome-screen').classList.remove('hidden');
 					document.body.classList.remove('playing');
 					LevelManager.resetGame();
-					return;
+					break;
 				}
 			}
 		}
@@ -363,7 +363,7 @@ function loop() {
 					document.getElementById('welcome-screen').classList.remove('hidden');
 					document.body.classList.remove('playing');
 					LevelManager.resetGame();
-					return;
+					break;
 				}
 			}
 		}
@@ -431,7 +431,7 @@ function loop() {
 							document.getElementById('welcome-screen').classList.remove('hidden');
 							document.body.classList.remove('playing');
 							LevelManager.resetGame();
-							return;
+							// No retornar, dejar que termine el frame normalmente
 						}
 					}
 				}

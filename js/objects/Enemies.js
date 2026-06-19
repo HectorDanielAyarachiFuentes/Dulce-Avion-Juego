@@ -19,9 +19,14 @@ loader.load('assets/models/flying_saucer.glb', function(gltf) {
 
 export const AlienLaser = function(x, y, z, vx = -15, vy = 0) {
 	this.mesh = new THREE.Object3D();
-	const geom = new THREE.CylinderGeometry(0.5, 0.5, 8, 4);
+	const geom = new THREE.CylinderGeometry(2, 2, 25, 6); // Más grande y visible
 	geom.applyMatrix4(new THREE.Matrix4().makeRotationZ(Math.PI / 2));
-	const mat = new THREE.MeshBasicMaterial({ color: Colors.green });
+	const mat = new THREE.MeshPhongMaterial({ 
+		color: Colors.green,
+		emissive: Colors.green, // Brillo de láser
+		emissiveIntensity: 1.5,
+		flatShading: true 
+	});
 	const body = new THREE.Mesh(geom, mat);
 	this.mesh.add(body);
 	this.mesh.position.set(x, y, z);

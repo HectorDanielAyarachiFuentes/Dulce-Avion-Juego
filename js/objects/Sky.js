@@ -80,16 +80,29 @@ export const Sky = function () {
 	// Cargar Sol
 	loader.load('assets/models/astros/Sun.glb', gltf => {
 		const model = gltf.scene;
-		// Puedes ajustar la escala aquí si el modelo es muy grande o pequeño
-		model.scale.set(50, 50, 50); 
+		model.scale.set(10, 10, 10); 
+		model.traverse(child => {
+			if (child.isMesh) {
+				child.material.fog = false; // El sol siempre brilla
+			}
+		});
 		this.sun.add(model);
 	});
 
 	// Cargar Luna
 	loader.load('assets/models/astros/Moon.glb', gltf => {
 		const model = gltf.scene;
-		// Puedes ajustar la escala aquí si el modelo es muy grande o pequeño
-		model.scale.set(50, 50, 50);
+		model.scale.set(10, 10, 10);
+		model.traverse(child => {
+			if (child.isMesh) {
+				child.material.fog = false; // La niebla no oculta la luna
+				// Hacemos que emita un poco de luz propia para que los cráteres se vean nítidos
+				if (child.material) {
+					child.material.emissive = new THREE.Color(0x444444); 
+					child.material.emissiveIntensity = 0.8;
+				}
+			}
+		});
 		this.moon.add(model);
 	});
 };
