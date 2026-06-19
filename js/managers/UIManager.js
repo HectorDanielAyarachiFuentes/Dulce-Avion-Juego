@@ -77,6 +77,12 @@ export const UIManager = {
 			closeSettingsBtn.addEventListener('click', () => {
 				settingsModal.classList.add('hidden');
 				initAudio(); 
+				
+				// Si veníamos del juego (estado paused), reanudar
+				if (GameState.gameState === 'paused') {
+					GameState.gameState = 'playing';
+					document.body.classList.add('playing');
+				}
 			});
 		}
 		

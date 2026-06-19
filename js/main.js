@@ -31,7 +31,7 @@ import { InputManager } from './managers/InputManager.js';
 import { LevelManager } from './managers/LevelManager.js';
 import { UIManager } from './managers/UIManager.js';
 
-let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle, victoryScene;
+let sea, mountains, sky, airplane, lakes, forest, eagle, grass, rocks, weaponManager, enemyManager, rain, mothership, bgBattle, victoryScene, miniPlaneObj;
 
 
 function createSea() {
@@ -506,7 +506,9 @@ function init() {
 	weaponManager = new WeaponManager(scene);
 	enemyManager = new EnemyManager(scene);
 	HUD.init(camera);
-	HUD.addMiniPlane(airplane.mesh.clone());
+	
+	miniPlaneObj = new AirPlane();
+	HUD.addMiniPlane(miniPlaneObj.mesh);
 	HUD.updateScore(GameState.score);
 	HUD.updateEnergy(GameState.energy);
 	HUD.hide();
@@ -519,6 +521,9 @@ function init() {
 	document.addEventListener('styleChanged', (e) => {
 		if (typeof previewPlane !== 'undefined' && previewPlane) {
 			previewPlane.applyStyle(e.detail);
+		}
+		if (typeof miniPlaneObj !== 'undefined' && miniPlaneObj) {
+			miniPlaneObj.applyStyle(e.detail);
 		}
 	});
 
