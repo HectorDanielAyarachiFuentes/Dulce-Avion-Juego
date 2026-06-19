@@ -27,19 +27,22 @@ export const Mountains = function() {
 		// MUCH smaller scale, MUCH higher density to form clusters
 		let countNormal = 15;
 		let countDistant = 40;
+		let countForeground = 2; // Very few in the front
 		let baseScale = 50;
 		
 		if (index === 2) { // white mountains (snowy peaks, fewest but tallest)
 			countNormal = 5;
 			countDistant = 15;
+			countForeground = 1;
 			baseScale = 80;
 		} else if (index === 0) { // Burgundy (many base mountains)
 			countNormal = 20;
 			countDistant = 50;
+			countForeground = 4;
 			baseScale = 60;
 		}
 
-		const totalCount = countNormal + countDistant;
+		const totalCount = countNormal + countDistant + countForeground;
 		const instancedMesh = new THREE.InstancedMesh(geom, mat, totalCount);
 		instancedMesh.castShadow = true;
 		instancedMesh.receiveShadow = true;
@@ -47,15 +50,25 @@ export const Mountains = function() {
 		const dummy = new THREE.Object3D();
 		let currentIndex = 0;
 
-		const placeBatch = (count, isDistant) => {
+		const placeBatch = (count, layerType) => {
 			const stepAngle = Math.PI * 2 / count;
 			for(let i=0; i<count; i++) {
 				// Clustered positions: perturb slightly from an even distribution
 				const a = stepAngle * i + (Math.random() - 0.5) * 0.2;
 				
-				const zPos = isDistant 
-					? -1500 - Math.random()*1500 
-					: -1000 - Math.random()*500;
+				let zPos;
+				let scaleMult;
+				
+				if (layerType === 'distant') {
+					zPos = -1500 - Math.random() * 1500;
+					scaleMult = 1.5 + Math.random() * 1.5;
+				} else if (layerType === 'normal') {
+					zPos = -1000 - Math.random() * 500;
+					scaleMult = 0.8 + Math.random() * 1.2;
+				} else { // foreground
+					zPos = 100 + Math.random() * 200; // Passes near/over camera (z=280)
+					scaleMult = 0.5 + Math.random() * 0.8; // Not too huge to not block screen completely
+				}
 					
 				dummy.position.set(Math.cos(a)*h, Math.sin(a)*h, zPos);
 				dummy.rotation.set(0, 0, a - Math.PI/2);
@@ -63,10 +76,6 @@ export const Mountains = function() {
 				// Random rotation around Y to make them interlock
 				dummy.rotateY(Math.random() * Math.PI * 2);
 				
-				const scaleMult = isDistant 
-					? (1.5 + Math.random() * 1.5) 
-					: (0.8 + Math.random() * 1.2);
-					
 				const radiusScale = baseScale * scaleMult * (0.8 + Math.random() * 0.6); // varied width
 				const heightScale = baseScale * scaleMult * (1.5 + Math.random() * 1.5); // taller peaks
 				
@@ -78,8 +87,9 @@ export const Mountains = function() {
 			}
 		};
 
-		placeBatch(countNormal, false);
-		placeBatch(countDistant, true);
+		placeBatch(countNormal, 'normal');
+		placeBatch(countDistant, 'distant');
+		placeBatch(countForeground, 'foreground');
 		
 		instancedMesh.instanceMatrix.needsUpdate = true;
 		self.mesh.add(instancedMesh);

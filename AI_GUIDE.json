@@ -8,10 +8,11 @@
     "assets/": {
       "models/": {
         "Airplane.glb": "3D model for the player's airplane.",
-        "flying_saucer.glb": "3D model for the alien mothership/boss.",
-        "astros/": "3D models for astronomical objects (e.g. moon, planets).",
-        "mountains/": "3D models for mountain scenery.",
-        "nature_kit/": "3D models for nature scenery (trees, rocks, grass, etc.)."
+        "flying_saucer.glb": "3D model for the enemy spaceship.",
+        "astros/": {
+          "Moon.glb": "Model for the moon.",
+          "Sun.glb": "Model for the sun."
+        }
       }
     },
     "libs/": {
@@ -38,11 +39,10 @@
         "BackgroundBattle.js": "Background battle effect with alien and allied fighters, lasers, and a nuclear explosion effect.",
         "Sea.js": "The rotating planet/sea that acts as the ground.",
         "Sky.js": "Skybox logic, clouds, sun, and moon.",
-        "Forest.js": "Tree scenery generator.",
-        "Mountains.js": "Mountain scenery generator.",
-        "Lakes.js": "Lake scenery generator.",
-        "Rocks.js": "Rock scenery generator.",
-        "Grass.js": "Grass scenery generator.",
+        "Forest.js": "Generates low-poly procedural trees on the ground.",
+        "Mountains.js": "Generates low-poly procedural mountains in the background.",
+        "Grass.js": "Generates low-poly procedural grass and vegetation.",
+        "Rocks.js": "Generates low-poly procedural rocks on the ground.",
         "Rain.js": "Weather effects (rain particles).",
         "Captive.js": "Captives (humans, animals) falling with parachutes.",
         "Mothership.js": "Boss enemy mothership with 5000 HP, multiple attack phases, and death ray.",
